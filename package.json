@@ -1,0 +1,21 @@
+{
+  "name": "csv-type-detector",
+  "version": "1.0.0",
+  "description": "CSV type detection using DBpedia and Wikidata",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "consola": "^3.4.0",
+    "csv-parse": "^5.5.3",
+    "@types/bun": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "typescript": "^5.3.3"
+  }
+}
