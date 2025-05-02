@@ -38,7 +38,7 @@ export class URIAnalysisService {
 	 */
 	constructor(config: Partial<URIAnalysisConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug("URI analysis service initialized with config:", this.config);
+		consola.debug("Service d'analyse d'URI initialisé avec la configuration :", this.config);
 	}
 
 	/**
@@ -47,7 +47,7 @@ export class URIAnalysisService {
 	 * @returns Enhanced entity candidates
 	 */
 	analyzeURIs(columnCandidates: EntityCandidate[][]): EntityCandidate[][] {
-		consola.start(`Analyzing URIs for ${columnCandidates.length} columns`);
+		consola.start(`Analyse des URI pour ${columnCandidates.length} colonnes`);
 
 		// Clone the candidates to avoid modifying the originals
 		const enhancedCandidates = columnCandidates.map((column) =>
@@ -98,7 +98,7 @@ export class URIAnalysisService {
 								candidate.score + this.config.confidenceBoost,
 							);
 							consola.debug(
-								`Boosted confidence for "${candidate.entity.label}" based on URI match with "${value}"`,
+								`Confiance augmentée pour "${candidate.entity.label}" basée sur la correspondance URI avec "${value}"`,
 							);
 							break;
 						}
@@ -107,7 +107,7 @@ export class URIAnalysisService {
 			}
 		}
 
-		consola.success("URI analysis completed");
+		consola.success("Analyse des URI terminée");
 		return enhancedCandidates;
 	}
 
@@ -149,7 +149,7 @@ export class URIAnalysisService {
 	 */
 	extractInfoFromURIs(candidates: EntityCandidate[]): EntityCandidate[] {
 		consola.start(
-			`Extracting additional information from URIs for ${candidates.length} candidates`,
+			`Extraction d'informations supplémentaires des URI pour ${candidates.length} candidats`,
 		);
 
 		// Clone the candidates to avoid modifying the originals
@@ -165,7 +165,7 @@ export class URIAnalysisService {
 				if (uri.includes("wikidata.org/entity/")) {
 					const entityId = lastPart;
 					consola.debug(
-						`Extracted Wikidata entity ID: ${entityId} from ${uri}`,
+						`ID d'entité Wikidata extrait : ${entityId} de ${uri}`,
 					);
 				}
 
@@ -173,7 +173,7 @@ export class URIAnalysisService {
 				if (uri.includes("dbpedia.org/resource/")) {
 					const resourceName = decodeURIComponent(lastPart);
 					consola.debug(
-						`Extracted DBpedia resource name: ${resourceName} from ${uri}`,
+						`Nom de ressource DBpedia extrait : ${resourceName} de ${uri}`,
 					);
 				}
 			}

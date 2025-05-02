@@ -299,3 +299,4 @@ function getValuePattern(value: string): string {
 	if (/^[a-z\s]+$/.test(value)) return "lowercase_text";
 	return "mixed_text";
 }
+

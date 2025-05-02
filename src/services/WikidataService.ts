@@ -44,7 +44,7 @@ export class WikidataService {
 	 */
 	constructor(config: Partial<WikidataServiceConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug("Wikidata service initialized with config:", this.config);
+		consola.debug("Service Wikidata initialisé avec la configuration :", this.config);
 	}
 
 	/**
@@ -60,7 +60,7 @@ export class WikidataService {
 		limit = 5,
 	): Promise<Entity[]> {
 		try {
-			consola.debug(`Searching Wikidata for: "${query}" (${language})`);
+			consola.debug(`Recherche dans Wikidata pour : "${query}" (${language})`);
 
 			const url = new URL(this.config.apiEndpoint);
 			url.searchParams.append("action", "wbsearchentities");
@@ -106,12 +106,12 @@ export class WikidataService {
 			});
 
 			consola.debug(
-				`Found ${entities.length} entities in Wikidata for "${query}"`,
+				`Trouvé ${entities.length} entités dans Wikidata pour "${query}"`,
 			);
 			return entities;
 		} catch (error) {
 			consola.error(
-				`Error searching Wikidata: ${error instanceof Error ? error.message : String(error)}`,
+				`Erreur lors de la recherche dans Wikidata : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
 		}
@@ -124,7 +124,7 @@ export class WikidataService {
 	 */
 	async getEntityTypes(entityUri: string): Promise<SemanticType[]> {
 		try {
-			consola.debug(`Retrieving types for entity: ${entityUri}`);
+			consola.debug(`Récupération des types pour l'entité : ${entityUri}`);
 
 			// Extract the entity ID from the URI
 			const entityId = entityUri.split("/").pop() || "";
@@ -173,11 +173,11 @@ export class WikidataService {
 				},
 			);
 
-			consola.debug(`Found ${types.length} types for entity ${entityUri}`);
+			consola.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
 			return types;
 		} catch (error) {
 			consola.error(
-				`Error retrieving entity types from Wikidata: ${error instanceof Error ? error.message : String(error)}`,
+				`Erreur lors de la récupération des types d'entité depuis Wikidata : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
 		}
@@ -190,7 +190,7 @@ export class WikidataService {
 	 */
 	async getParentTypes(typeUri: string): Promise<string[]> {
 		try {
-			consola.debug(`Retrieving parent types for: ${typeUri}`);
+			consola.debug(`Récupération des types parents pour : ${typeUri}`);
 
 			// Extract the entity ID from the URI
 			const typeId = typeUri.split("/").pop() || "";
@@ -230,11 +230,11 @@ export class WikidataService {
 				(binding: any) => binding.parentType.value,
 			);
 
-			consola.debug(`Found ${parentTypes.length} parent types for ${typeUri}`);
+			consola.debug(`Trouvé ${parentTypes.length} types parents pour ${typeUri}`);
 			return parentTypes;
 		} catch (error) {
 			consola.error(
-				`Error retrieving parent types from Wikidata: ${error instanceof Error ? error.message : String(error)}`,
+				`Erreur lors de la récupération des types parents depuis Wikidata : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
 		}
@@ -251,7 +251,7 @@ export class WikidataService {
 		language = "en",
 	): Promise<string | null> {
 		try {
-			consola.debug(`Retrieving label for entity: ${entityId}`);
+			consola.debug(`Récupération du libellé pour l'entité : ${entityId}`);
 
 			const url = new URL(this.config.apiEndpoint);
 			url.searchParams.append("action", "wbgetentities");
@@ -278,7 +278,7 @@ export class WikidataService {
 			return null;
 		} catch (error) {
 			consola.error(
-				`Error retrieving entity label from Wikidata: ${error instanceof Error ? error.message : String(error)}`,
+				`Erreur lors de la récupération du libellé d'entité depuis Wikidata : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return null;
 		}
@@ -307,11 +307,11 @@ export class WikidataService {
 				]);
 			} catch (error) {
 				lastError = error instanceof Error ? error : new Error(String(error));
-				consola.warn(`Query attempt ${attempt} failed: ${lastError.message}`);
+				consola.warn(`Tentative de requête ${attempt} échouée : ${lastError.message}`);
 
 				if (attempt < this.config.maxRetries) {
 					const delay = this.config.retryDelay * attempt;
-					consola.debug(`Retrying in ${delay}ms...`);
+					consola.debug(`Nouvelle tentative dans ${delay}ms...`);
 					await new Promise((resolve) => setTimeout(resolve, delay));
 				}
 			}

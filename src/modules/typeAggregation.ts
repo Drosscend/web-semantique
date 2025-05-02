@@ -44,8 +44,8 @@ export class TypeAggregationService {
 	constructor(config: Partial<TypeAggregationConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
 		consola.debug(
-			"Type aggregation service initialized with config:",
-			this.config,
+				"Service d'agrégation de types initialisé avec la configuration :",
+				this.config,
 		);
 	}
 
@@ -61,7 +61,7 @@ export class TypeAggregationService {
 		columnHeaders: string[],
 		columnRelations: ColumnRelation[] = [],
 	): ColumnTypeAnnotation[] {
-		consola.start(`Aggregating types for ${columnTypes.length} columns`);
+		consola.start(`Agrégation des types pour ${columnTypes.length} colonnes`);
 
 		const annotations: ColumnTypeAnnotation[] = [];
 
@@ -73,7 +73,7 @@ export class TypeAggregationService {
 
 			// Skip empty columns
 			if (typeCandidates.length === 0) {
-				consola.warn(`No type candidates for column ${header}, skipping`);
+				consola.warn(`Aucun candidat de type pour la colonne ${header}, ignorée`);
 				continue;
 			}
 
@@ -108,7 +108,7 @@ export class TypeAggregationService {
 			annotations.push(annotation);
 
 			consola.success(
-				`Column "${header}" annotated as "${bestType.type.label}" with confidence ${bestType.confidence.toFixed(2)}`,
+					`Colonne "${header}" annotée comme "${bestType.type.label}" avec une confiance de ${bestType.confidence.toFixed(2)}`,
 			);
 		}
 
@@ -138,7 +138,7 @@ export class TypeAggregationService {
 		if (relevantRelations.length === 0) return;
 
 		consola.debug(
-			`Applying relationship boosts for column ${columnIndex} based on ${relevantRelations.length} relations`,
+				`Application des améliorations de relation pour la colonne ${columnIndex} basées sur ${relevantRelations.length} relations`,
 		);
 
 		// For each relation
@@ -179,7 +179,7 @@ export class TypeAggregationService {
 					candidate.confidence = Math.min(1.0, candidate.confidence + boost);
 
 					consola.debug(
-						`Boosted confidence for type "${candidate.type.label}" by ${boost.toFixed(2)} based on relation with column ${otherColumnIndex}`,
+							`Confiance améliorée pour le type "${candidate.type.label}" de ${boost.toFixed(2)} basée sur la relation avec la colonne ${otherColumnIndex}`,
 					);
 				}
 			}
@@ -298,3 +298,4 @@ export function aggregateColumnTypes(
 		columnRelations,
 	);
 }
+

@@ -44,7 +44,7 @@ export class DBpediaService {
 	 */
 	constructor(config: Partial<DBpediaServiceConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug("DBpedia service initialized with config:", this.config);
+		consola.debug("Service DBpedia initialisé avec la configuration :", this.config);
 	}
 
 	/**
@@ -55,7 +55,7 @@ export class DBpediaService {
 	 */
 	async searchEntities(query: string, limit = 5): Promise<Entity[]> {
 		try {
-			consola.debug(`Searching DBpedia for: "${query}"`);
+			consola.debug(`Recherche dans DBpedia pour : "${query}"`);
 
 			const url = new URL(this.config.lookupEndpoint);
 			url.searchParams.append("query", query);
@@ -104,12 +104,12 @@ export class DBpediaService {
 			});
 
 			consola.debug(
-				`Found ${entities.length} entities in DBpedia for "${query}"`,
+				`Trouvé ${entities.length} entités dans DBpedia pour "${query}"`,
 			);
 			return entities;
 		} catch (error) {
 			consola.error(
-				`Error searching DBpedia: ${error instanceof Error ? error.message : String(error)}`,
+				`Erreur lors de la recherche dans DBpedia : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
 		}
@@ -122,7 +122,7 @@ export class DBpediaService {
 	 */
 	async getEntityTypes(entityUri: string): Promise<SemanticType[]> {
 		try {
-			consola.debug(`Retrieving types for entity: ${entityUri}`);
+			consola.debug(`Récupération des types pour l'entité : ${entityUri}`);
 
 			const query = `
         SELECT DISTINCT ?type ?label WHERE {
@@ -165,11 +165,11 @@ export class DBpediaService {
 				},
 			);
 
-			consola.debug(`Found ${types.length} types for entity ${entityUri}`);
+			consola.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
 			return types;
 		} catch (error) {
 			consola.error(
-				`Error retrieving entity types from DBpedia: ${error instanceof Error ? error.message : String(error)}`,
+				`Erreur lors de la récupération des types d'entité depuis DBpedia : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
 		}
@@ -182,7 +182,7 @@ export class DBpediaService {
 	 */
 	async getParentTypes(typeUri: string): Promise<string[]> {
 		try {
-			consola.debug(`Retrieving parent types for: ${typeUri}`);
+			consola.debug(`Récupération des types parents pour : ${typeUri}`);
 
 			const query = `
         SELECT DISTINCT ?parentType WHERE {
@@ -216,11 +216,11 @@ export class DBpediaService {
 				(binding: any) => binding.parentType.value,
 			);
 
-			consola.debug(`Found ${parentTypes.length} parent types for ${typeUri}`);
+			consola.debug(`Trouvé ${parentTypes.length} types parents pour ${typeUri}`);
 			return parentTypes;
 		} catch (error) {
 			consola.error(
-				`Error retrieving parent types from DBpedia: ${error instanceof Error ? error.message : String(error)}`,
+				`Erreur lors de la récupération des types parents depuis DBpedia : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
 		}
@@ -249,11 +249,11 @@ export class DBpediaService {
 				]);
 			} catch (error) {
 				lastError = error instanceof Error ? error : new Error(String(error));
-				consola.warn(`Query attempt ${attempt} failed: ${lastError.message}`);
+				consola.warn(`Tentative de requête ${attempt} échouée : ${lastError.message}`);
 
 				if (attempt < this.config.maxRetries) {
 					const delay = this.config.retryDelay * attempt;
-					consola.debug(`Retrying in ${delay}ms...`);
+					consola.debug(`Nouvelle tentative dans ${delay}ms...`);
 					await new Promise((resolve) => setTimeout(resolve, delay));
 				}
 			}

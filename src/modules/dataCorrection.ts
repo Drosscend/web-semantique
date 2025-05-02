@@ -144,3 +144,4 @@ export function correctCells(cells: Cell[][]): Cell[][] {
 
 	return correctedCells;
 }
+

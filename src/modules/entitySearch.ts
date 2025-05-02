@@ -58,7 +58,7 @@ export class EntitySearchService {
 		this.wikidataService = wikidataService || new WikidataService();
 
 		consola.debug(
-			"Entity search service initialized with config:",
+			"Service de recherche d'entités initialisé avec la configuration :",
 			this.config,
 		);
 	}

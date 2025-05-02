@@ -50,8 +50,8 @@ export class TypeExtractionService {
 		this.typeMappingService = new TypeMappingService();
 
 		consola.debug(
-			"Type extraction service initialized with config:",
-			this.config,
+				"Service d'extraction de types initialisé avec la configuration :",
+				this.config,
 		);
 	}
 
@@ -64,7 +64,7 @@ export class TypeExtractionService {
 		candidates: EntityCandidate[],
 	): Promise<TypeCandidate[]> {
 		consola.start(
-			`Extracting types from ${candidates.length} entity candidates`,
+				`Extraction des types à partir de ${candidates.length} candidats d'entité`,
 		);
 
 		// Group candidates by entity URI to avoid duplicate processing
@@ -114,7 +114,7 @@ export class TypeExtractionService {
 			.slice(0, this.config.maxTypesPerColumn);
 
 		consola.success(
-			`Extracted ${filteredTypes.length} type candidates for the column`,
+				`${filteredTypes.length} candidats de type extraits pour la colonne`,
 		);
 		return filteredTypes;
 	}
@@ -150,7 +150,7 @@ export class TypeExtractionService {
 				}
 			} catch (error) {
 				consola.error(
-					`Error fetching types for ${candidate.entity.uri}: ${error instanceof Error ? error.message : String(error)}`,
+					`Erreur lors de la récupération des types pour ${candidate.entity.uri} : ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
 		}
@@ -250,7 +250,7 @@ export class TypeExtractionService {
 			}
 		} catch (error) {
 			consola.error(
-				`Error fetching parent types for ${type.uri}: ${error instanceof Error ? error.message : String(error)}`,
+					`Erreur lors de la récupération des types parents pour ${type.uri} : ${error instanceof Error ? error.message : String(error)}`,
 			);
 		}
 	}
@@ -316,3 +316,4 @@ export async function extractTypesForAllColumns(
 
 	return columnTypes;
 }
+

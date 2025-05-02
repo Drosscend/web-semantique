@@ -40,8 +40,7 @@ interface TypeRelationship {
  * Known relationships between common entity types
  */
 const KNOWN_TYPE_RELATIONSHIPS: TypeRelationship[] = [
-	// TODO: Add more relationships as needed
-	// Country - Capital
+	// Country - Capital relationships
 	{
 		sourceType: "http://dbpedia.org/ontology/Country",
 		targetType: "http://dbpedia.org/ontology/City",
@@ -55,11 +54,337 @@ const KNOWN_TYPE_RELATIONSHIPS: TypeRelationship[] = [
 		confidence: 0.9,
 	},
 
-	// Country - City
+	// Country - City relationships
 	{
 		sourceType: "http://dbpedia.org/ontology/Country",
 		targetType: "http://dbpedia.org/ontology/City",
 		relationName: "hasCity",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q6256", // Country
+		targetType: "http://www.wikidata.org/entity/Q515", // City
+		relationName: "hasCity",
+		confidence: 0.7,
+	},
+
+	// Administrative/Geographic hierarchies
+	{
+		sourceType: "http://dbpedia.org/ontology/Country",
+		targetType: "http://dbpedia.org/ontology/Region",
+		relationName: "hasRegion",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q6256", // Country
+		targetType: "http://www.wikidata.org/entity/Q82794", // Region
+		relationName: "hasRegion",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Region",
+		targetType: "http://dbpedia.org/ontology/City",
+		relationName: "hasCity",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q82794", // Region
+		targetType: "http://www.wikidata.org/entity/Q515", // City
+		relationName: "hasCity",
+		confidence: 0.8,
+	},
+
+	// Country - Natural features
+	{
+		sourceType: "http://dbpedia.org/ontology/Country",
+		targetType: "http://dbpedia.org/ontology/Mountain",
+		relationName: "hasMountain",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q6256", // Country
+		targetType: "http://www.wikidata.org/entity/Q8502", // Mountain
+		relationName: "hasMountain",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Country",
+		targetType: "http://dbpedia.org/ontology/River",
+		relationName: "hasRiver",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q6256", // Country
+		targetType: "http://www.wikidata.org/entity/Q4022", // River
+		relationName: "hasRiver",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Country",
+		targetType: "http://dbpedia.org/ontology/Lake",
+		relationName: "hasLake",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q6256", // Country
+		targetType: "http://www.wikidata.org/entity/Q23397", // Lake
+		relationName: "hasLake",
+		confidence: 0.7,
+	},
+
+	// Country - Infrastructure
+	{
+		sourceType: "http://dbpedia.org/ontology/Country",
+		targetType: "http://dbpedia.org/ontology/Airport",
+		relationName: "hasAirport",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q6256", // Country
+		targetType: "http://www.wikidata.org/entity/Q1248784", // Airport
+		relationName: "hasAirport",
+		confidence: 0.8,
+	},
+
+	// Organization - Person relations
+	{
+		sourceType: "http://dbpedia.org/ontology/Organisation",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "foundedBy",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q43229", // Organization
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "foundedBy",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Organisation",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasMember",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q43229", // Organization
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasMember",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Company",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasCEO",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q783794", // Company
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasCEO",
+		confidence: 0.8,
+	},
+
+	// Educational institutions - Person
+	{
+		sourceType: "http://dbpedia.org/ontology/University",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasAlumnus",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q3918", // University
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasAlumnus",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/University",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasProfessor",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q3918", // University
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasProfessor",
+		confidence: 0.8,
+	},
+
+	// Creative works - Person (authorship/creation)
+	{
+		sourceType: "http://dbpedia.org/ontology/Book",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasAuthor",
+		confidence: 0.9,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q571", // Book
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasAuthor",
+		confidence: 0.9,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Film",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasDirector",
+		confidence: 0.9,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q11424", // Film
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasDirector",
+		confidence: 0.9,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Film",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasActor",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q11424", // Film
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasActor",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Song",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasComposer",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q7366", // Song
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasComposer",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Song",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasPerformer",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q7366", // Song
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasPerformer",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/AcademicArticle",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasAuthor",
+		confidence: 0.9,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q13442814", // Academic Article
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasAuthor",
+		confidence: 0.9,
+	},
+
+	// Event relationships
+	{
+		sourceType: "http://dbpedia.org/ontology/Event",
+		targetType: "http://dbpedia.org/ontology/Place",
+		relationName: "hasLocation",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q1656682", // Event
+		targetType: "http://www.wikidata.org/entity/Q2221906", // Location
+		relationName: "hasLocation",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/SportsEvent",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasParticipant",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q1656682", // Event (general category for sports events)
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasParticipant",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Event",
+		targetType: "http://dbpedia.org/ontology/Organisation",
+		relationName: "hasOrganizer",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q1656682", // Event
+		targetType: "http://www.wikidata.org/entity/Q43229", // Organization
+		relationName: "hasOrganizer",
+		confidence: 0.8,
+	},
+
+	// Work containment relations
+	{
+		sourceType: "http://dbpedia.org/ontology/Album",
+		targetType: "http://dbpedia.org/ontology/Song",
+		relationName: "hasSong",
+		confidence: 0.9,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q482994", // Album
+		targetType: "http://www.wikidata.org/entity/Q7366", // Song
+		relationName: "hasSong",
+		confidence: 0.9,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/TelevisionShow",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasActor",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q5398426", // TV Show
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasActor",
+		confidence: 0.8,
+	},
+
+	// Software relations
+	{
+		sourceType: "http://dbpedia.org/ontology/Software",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "hasDeveloper",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q7397", // Software
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "hasDeveloper",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://dbpedia.org/ontology/Software",
+		targetType: "http://dbpedia.org/ontology/Company",
+		relationName: "developedBy",
+		confidence: 0.8,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q7397", // Software
+		targetType: "http://www.wikidata.org/entity/Q783794", // Company
+		relationName: "developedBy",
+		confidence: 0.8,
+	},
+
+	// Disease relations
+	{
+		sourceType: "http://dbpedia.org/ontology/Disease",
+		targetType: "http://dbpedia.org/ontology/Person",
+		relationName: "affectsOrganism",
+		confidence: 0.7,
+	},
+	{
+		sourceType: "http://www.wikidata.org/entity/Q12136", // Disease
+		targetType: "http://www.wikidata.org/entity/Q5", // Human
+		relationName: "affectsOrganism",
 		confidence: 0.7,
 	},
 ];
