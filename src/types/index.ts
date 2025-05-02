@@ -88,12 +88,17 @@ export interface CTAConfig {
 }
 
 /**
- * Represents a mapping between DBpedia and Wikidata types
+ * Type definition for mapping between DBpedia and Wikidata types
  */
 export interface TypeMapping {
-	dbpediaType: string; // URI of DBpedia type
-	wikidataType: string; // URI of Wikidata type
-	confidence: number; // Confidence in this mapping
+	/** The DBpedia ontology type URI */
+	dbpediaType: string;
+	/** The corresponding Wikidata entity URI */
+	wikidataType: string;
+	/** Confidence level of this mapping (0.0 to 1.0) */
+	confidence: number;
+	/** Optional description of the mapping */
+	description?: string;
 }
 
 /**
