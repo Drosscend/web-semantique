@@ -1,0 +1,126 @@
+[
+  {
+    "columnIndex": 0,
+    "columnHeader": "col0",
+    "assignedType": {
+      "uri": "http://www.wikidata.org/entity/Q46169",
+      "label": "national park",
+      "source": "Wikidata",
+      "parentTypes": [
+        "http://www.wikidata.org/entity/Q22698",
+        "http://www.wikidata.org/entity/Q56061",
+        "http://www.wikidata.org/entity/Q386426",
+        "http://www.wikidata.org/entity/Q473972",
+        "http://www.wikidata.org/entity/Q62059246"
+      ]
+    },
+    "confidence": 0.35752634954973084,
+    "alternativeTypes": [
+      {
+        "type": {
+          "uri": "http://dbpedia.org/ontology/Place",
+          "label": "place",
+          "source": "DBpedia",
+          "parentTypes": []
+        },
+        "score": 68.65930863259123,
+        "entityMatches": 87,
+        "confidence": 0.246975930333062
+      },
+      {
+        "type": {
+          "uri": "http://dbpedia.org/ontology/Location",
+          "label": "Location",
+          "source": "DBpedia",
+          "parentTypes": []
+        },
+        "score": 65.39278689346077,
+        "entityMatches": 83,
+        "confidence": 0.23522585213475095
+      }
+    ]
+  },
+  {
+    "columnIndex": 1,
+    "columnHeader": "col1",
+    "assignedType": {
+      "uri": "http://www.wikidata.org/entity/Q21199",
+      "label": "natural number",
+      "source": "Wikidata",
+      "parentTypes": [
+        "http://www.wikidata.org/entity/Q12503"
+      ]
+    },
+    "confidence": 0.43523598820058995,
+    "alternativeTypes": [
+      {
+        "type": {
+          "uri": "http://www.wikidata.org/entity/Q13366129",
+          "label": "odd number",
+          "source": "Wikidata",
+          "parentTypes": [
+            "http://www.wikidata.org/entity/Q12503"
+          ]
+        },
+        "score": 32.025000000000006,
+        "entityMatches": 35,
+        "confidence": 0.28340707964601775
+      },
+      {
+        "type": {
+          "uri": "http://www.wikidata.org/entity/Q577",
+          "label": "year",
+          "source": "Wikidata",
+          "parentTypes": [
+            "http://www.wikidata.org/entity/Q37640",
+            "http://www.wikidata.org/entity/Q186081"
+          ]
+        },
+        "score": 32,
+        "entityMatches": 32,
+        "confidence": 0.2831858407079646
+      },
+      {
+        "type": {
+          "uri": "http://www.wikidata.org/entity/Q50707",
+          "label": "composite number",
+          "source": "Wikidata",
+          "parentTypes": [
+            "http://www.wikidata.org/entity/Q28920044"
+          ]
+        },
+        "score": 31.96666666666667,
+        "entityMatches": 33,
+        "confidence": 0.28289085545722714
+      }
+    ]
+  },
+  {
+    "columnIndex": 2,
+    "columnHeader": "col2",
+    "assignedType": {
+      "uri": "http://www.wikidata.org/entity/Q21199",
+      "label": "natural number",
+      "source": "Wikidata",
+      "parentTypes": [
+        "http://www.wikidata.org/entity/Q12503"
+      ]
+    },
+    "confidence": 0.28849740932642487,
+    "alternativeTypes": [
+      {
+        "type": {
+          "uri": "http://www.wikidata.org/entity/Q50707",
+          "label": "composite number",
+          "source": "Wikidata",
+          "parentTypes": [
+            "http://www.wikidata.org/entity/Q28920044"
+          ]
+        },
+        "score": 44.305,
+        "entityMatches": 45,
+        "confidence": 0.229559585492228
+      }
+    ]
+  }
+]
