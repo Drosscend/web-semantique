@@ -42,21 +42,12 @@ export class TypeExtractionService {
 
 	/**
 	 * Creates a new type extraction service
-	 * @param config Optional configuration
-	 * @param dbpediaService Optional DBpedia service
-	 * @param wikidataService Optional Wikidata service
-	 * @param typeMappingService Optional type mapping service
 	 */
-	constructor(
-		config: Partial<TypeExtractionConfig> = {},
-		dbpediaService?: DBpediaService,
-		wikidataService?: WikidataService,
-		typeMappingService?: TypeMappingService,
-	) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
-		this.dbpediaService = dbpediaService || new DBpediaService();
-		this.wikidataService = wikidataService || new WikidataService();
-		this.typeMappingService = typeMappingService || new TypeMappingService();
+	constructor() {
+		this.config = { ...DEFAULT_CONFIG };
+		this.dbpediaService = new DBpediaService();
+		this.wikidataService = new WikidataService();
+		this.typeMappingService = new TypeMappingService();
 
 		consola.debug(
 			"Type extraction service initialized with config:",
@@ -305,18 +296,6 @@ export class TypeExtractionService {
  */
 export function createTypeExtractionService(): TypeExtractionService {
 	return new TypeExtractionService();
-}
-
-/**
- * Extracts types from entity candidates for a column
- * @param candidates The entity candidates for the column
- * @returns An array of type candidates for the column
- */
-export async function extractColumnTypes(
-	candidates: EntityCandidate[],
-): Promise<TypeCandidate[]> {
-	const service = createTypeExtractionService();
-	return service.extractColumnTypes(candidates);
 }
 
 /**

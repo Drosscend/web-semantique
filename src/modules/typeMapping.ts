@@ -8,8 +8,6 @@
  */
 
 import { consola } from "consola";
-import { DBpediaService } from "../services/DBpediaService";
-import { WikidataService } from "../services/WikidataService";
 import type { EntityCandidate, TypeMapping } from "../types";
 
 /**
@@ -312,22 +310,12 @@ const KNOWN_TYPE_MAPPINGS: TypeMapping[] = [
  * Service for mapping between DBpedia and Wikidata types
  */
 export class TypeMappingService {
-	private dbpediaService: DBpediaService;
-	private wikidataService: WikidataService;
 	private mappings: Map<string, TypeMapping[]> = new Map();
 
 	/**
 	 * Creates a new type mapping service
-	 * @param dbpediaService Optional DBpedia service
-	 * @param wikidataService Optional Wikidata service
 	 */
-	constructor(
-		dbpediaService?: DBpediaService,
-		wikidataService?: WikidataService,
-	) {
-		this.dbpediaService = dbpediaService || new DBpediaService();
-		this.wikidataService = wikidataService || new WikidataService();
-
+	constructor() {
 		// Initialize with known mappings
 		this.initializeKnownMappings();
 
@@ -382,26 +370,6 @@ export class TypeMappingService {
 	 */
 	getEquivalentTypes(typeUri: string): TypeMapping[] {
 		return this.mappings.get(typeUri) || [];
-	}
-
-	/**
-	 * Calculates the similarity between two strings
-	 * @param a First string
-	 * @param b Second string
-	 * @returns A similarity score between 0 and 1
-	 */
-	private calculateStringSimilarity(a: string, b: string): number {
-		if (a === b) return 1;
-		if (a.length === 0 || b.length === 0) return 0;
-
-		// Simple Jaccard similarity for demonstration
-		const setA = new Set(a.split(""));
-		const setB = new Set(b.split(""));
-
-		const intersection = new Set([...setA].filter((x) => setB.has(x)));
-		const union = new Set([...setA, ...setB]);
-
-		return intersection.size / union.size;
 	}
 
 	/**

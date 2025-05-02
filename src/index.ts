@@ -31,7 +31,7 @@ import { analyzeURIs } from "./modules/uriAnalysis";
  * Default configuration for the CTA algorithm
  */
 const DEFAULT_CONFIG: CTAConfig = {
-	sampleSize: 100,
+	sampleSize: 5,
 	confidenceThreshold: 0.3,
 	useColumnRelations: true,
 	useURIAnalysis: true,
