@@ -142,47 +142,6 @@ export class URIAnalysisService {
 		// Remove special characters and convert to lowercase
 		return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 	}
-
-	/**
-	 * Extracts additional information from URIs
-	 * @param candidates The entity candidates
-	 * @returns Enhanced entity candidates with additional information
-	 */
-	extractInfoFromURIs(candidates: EntityCandidate[]): EntityCandidate[] {
-		consola.start(
-			`Extraction d'informations supplémentaires des URI pour ${candidates.length} candidats`,
-		);
-
-		// Clone the candidates to avoid modifying the originals
-		const enhancedCandidates = candidates.map((candidate) => {
-			// Ensure entity and uri exist and uri is a string
-			if (candidate.entity?.uri && typeof candidate.entity.uri === "string") {
-				// Extract information from the URI
-				const uri = candidate.entity.uri;
-				const uriParts = uri.split(/[/#]/);
-				const lastPart = uriParts[uriParts.length - 1];
-
-				// For Wikidata URIs, extract the entity ID
-				if (uri.includes("wikidata.org/entity/")) {
-					const entityId = lastPart;
-					consola.debug(`ID d'entité Wikidata extrait : ${entityId} de ${uri}`);
-				}
-
-				// For DBpedia URIs, extract the resource name
-				if (uri.includes("dbpedia.org/resource/")) {
-					const resourceName = decodeURIComponent(lastPart);
-					consola.debug(
-						`Nom de ressource DBpedia extrait : ${resourceName} de ${uri}`,
-					);
-				}
-			}
-
-			return candidate;
-		});
-
-		consola.success("URI information extraction completed");
-		return enhancedCandidates;
-	}
 }
 
 /**
@@ -203,16 +162,4 @@ export function analyzeURIs(
 ): EntityCandidate[][] {
 	const service = createURIAnalysisService();
 	return service.analyzeURIs(columnCandidates);
-}
-
-/**
- * Extracts additional information from URIs
- * @param candidates The entity candidates
- * @returns Enhanced entity candidates with additional information
- */
-export function extractInfoFromURIs(
-	candidates: EntityCandidate[],
-): EntityCandidate[] {
-	const service = createURIAnalysisService();
-	return service.extractInfoFromURIs(candidates);
 }
