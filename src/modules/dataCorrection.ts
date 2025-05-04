@@ -185,10 +185,57 @@ export function standardizeCapitalization(value: string): string {
  * @param value The value to correct
  * @returns The corrected value
  */
-function correctCommonSpellingMistakes(value: string): string {
-	// TODO: Implement a more sophisticated spell-checking algorithm
+export function correctCommonSpellingMistakes(value: string): string {
+	const commonMistakes: Record<string, string> = {
+		"accomodate": "accommodate",
+		"alot": "a lot",
+		"begining": "beginning",
+		"beleive": "believe",
+		"calender": "calendar",
+		"definately": "definitely",
+		"embarass": "embarrass",
+		"existance": "existence",
+		"grammer": "grammar",
+		"harrassment": "harassment",
+		"independant": "independent",
+		"liason": "liaison",
+		"millenium": "millennium",
+		"neccessary": "necessary",
+		"occassion": "occasion",
+		"occured": "occurred",
+		"posession": "possession",
+		"recieve": "receive",
+		"seperate": "separate",
+		"succesful": "successful",
+		"untill": "until",
+		"wierd": "weird"
+	};
 
-	return value;
+	// If there are no common mistakes defined, return the original value
+	if (Object.keys(commonMistakes).length === 0) {
+		return value;
+	}
+
+	// Helper function to match the case of the replacement to the original word
+	function matchCase(original: string, replacement: string): string {
+		// If original is all uppercase, make replacement all uppercase
+		if (original === original.toUpperCase()) {
+			return replacement.toUpperCase();
+		}
+
+		// If original has first letter capitalized, capitalize first letter of replacement
+		if (original[0] === original[0].toUpperCase() && original.slice(1) === original.slice(1).toLowerCase()) {
+			return replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase();
+		}
+
+		// Otherwise, use the replacement as is (lowercase)
+		return replacement;
+	}
+
+	return value.replace(
+		new RegExp(Object.keys(commonMistakes).join("|"), "gi"),
+		(match) => matchCase(match, commonMistakes[match.toLowerCase()]),
+	);
 }
 
 /**
@@ -369,7 +416,7 @@ export function standardizeDateFormat(value: string): string {
  * @param value The value to standardize
  * @returns The value with standardized number format
  */
-function standardizeNumberFormat(value: string): string {
+export function standardizeNumberFormat(value: string): string {
 	// Check if the value is a number
 	if (/^[\d.,]+$/.test(value)) {
 		// Remove thousands separators and standardize decimal separator
