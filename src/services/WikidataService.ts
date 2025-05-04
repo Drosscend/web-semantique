@@ -9,6 +9,7 @@
 
 import { consola } from "consola";
 import type { Entity, SemanticType } from "../types";
+import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
 
 /**
  * Configuration for the Wikidata service
@@ -44,7 +45,10 @@ export class WikidataService {
 	 */
 	constructor(config: Partial<WikidataServiceConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug("Service Wikidata initialisé avec la configuration :", this.config);
+		consola.debug(
+			"Service Wikidata initialisé avec la configuration :",
+			this.config,
+		);
 	}
 
 	/**
@@ -70,7 +74,10 @@ export class WikidataService {
 			url.searchParams.append("format", "json");
 			url.searchParams.append("origin", "*");
 
-			const response = await this.queryWithRetries(() => fetch(url.toString()));
+			const response = await queryWithRetries(
+				() => fetch(url.toString()),
+				this.config,
+			);
 
 			if (!response.ok) {
 				throw new Error(
@@ -89,7 +96,7 @@ export class WikidataService {
 						: item.id || "Unknown";
 
 				// Calculate a confidence score based on position and label similarity
-				const labelSimilarity = this.calculateStringSimilarity(
+				const labelSimilarity = calculateStringSimilarity(
 					query.toLowerCase(),
 					label.toLowerCase(),
 				);
@@ -143,13 +150,15 @@ export class WikidataService {
 			const url = new URL(this.config.sparqlEndpoint);
 			url.searchParams.append("query", query);
 
-			const response = await this.queryWithRetries(() =>
-				fetch(url.toString(), {
-					headers: {
-						Accept: "application/sparql-results+json",
-						"User-Agent": "CSV-Type-Detector/1.0",
-					},
-				}),
+			const response = await queryWithRetries(
+				() =>
+					fetch(url.toString(), {
+						headers: {
+							Accept: "application/sparql-results+json",
+							"User-Agent": "CSV-Type-Detector/1.0",
+						},
+					}),
+				this.config,
 			);
 
 			if (!response.ok) {
@@ -208,13 +217,15 @@ export class WikidataService {
 			const url = new URL(this.config.sparqlEndpoint);
 			url.searchParams.append("query", query);
 
-			const response = await this.queryWithRetries(() =>
-				fetch(url.toString(), {
-					headers: {
-						Accept: "application/sparql-results+json",
-						"User-Agent": "CSV-Type-Detector/1.0",
-					},
-				}),
+			const response = await queryWithRetries(
+				() =>
+					fetch(url.toString(), {
+						headers: {
+							Accept: "application/sparql-results+json",
+							"User-Agent": "CSV-Type-Detector/1.0",
+						},
+					}),
+				this.config,
 			);
 
 			if (!response.ok) {
@@ -230,7 +241,9 @@ export class WikidataService {
 				(binding: any) => binding.parentType.value,
 			);
 
-			consola.debug(`Trouvé ${parentTypes.length} types parents pour ${typeUri}`);
+			consola.debug(
+				`Trouvé ${parentTypes.length} types parents pour ${typeUri}`,
+			);
 			return parentTypes;
 		} catch (error) {
 			consola.error(
@@ -238,106 +251,6 @@ export class WikidataService {
 			);
 			return [];
 		}
-	}
-
-	/**
-	 * Retrieves the label of an entity from Wikidata
-	 * @param entityId The ID of the entity (e.g., Q42)
-	 * @param language The language code (default: 'en')
-	 * @returns Promise resolving to the entity label
-	 */
-	async getEntityLabel(
-		entityId: string,
-		language = "en",
-	): Promise<string | null> {
-		try {
-			consola.debug(`Récupération du libellé pour l'entité : ${entityId}`);
-
-			const url = new URL(this.config.apiEndpoint);
-			url.searchParams.append("action", "wbgetentities");
-			url.searchParams.append("ids", entityId);
-			url.searchParams.append("props", "labels");
-			url.searchParams.append("languages", language);
-			url.searchParams.append("format", "json");
-			url.searchParams.append("origin", "*");
-
-			const response = await this.queryWithRetries(() => fetch(url.toString()));
-
-			if (!response.ok) {
-				throw new Error(
-					`Wikidata API request failed with status: ${response.status}`,
-				);
-			}
-
-			const data = await response.json();
-
-			if (data.entities?.[entityId]?.labels?.[language]) {
-				return data.entities[entityId].labels[language].value;
-			}
-
-			return null;
-		} catch (error) {
-			consola.error(
-				`Erreur lors de la récupération du libellé d'entité depuis Wikidata : ${error instanceof Error ? error.message : String(error)}`,
-			);
-			return null;
-		}
-	}
-
-	/**
-	 * Executes a query with retries
-	 * @param queryFn The query function to execute
-	 * @returns Promise resolving to the query response
-	 */
-	private async queryWithRetries(
-		queryFn: () => Promise<Response>,
-	): Promise<Response> {
-		let lastError: Error | null = null;
-
-		for (let attempt = 1; attempt <= this.config.maxRetries; attempt++) {
-			try {
-				return await Promise.race([
-					queryFn(),
-					new Promise<Response>((_, reject) => {
-						setTimeout(
-							() => reject(new Error("Request timeout")),
-							this.config.timeout,
-						);
-					}),
-				]);
-			} catch (error) {
-				lastError = error instanceof Error ? error : new Error(String(error));
-				consola.warn(`Tentative de requête ${attempt} échouée : ${lastError.message}`);
-
-				if (attempt < this.config.maxRetries) {
-					const delay = this.config.retryDelay * attempt;
-					consola.debug(`Nouvelle tentative dans ${delay}ms...`);
-					await new Promise((resolve) => setTimeout(resolve, delay));
-				}
-			}
-		}
-
-		throw lastError || new Error("Query failed after retries");
-	}
-
-	/**
-	 * Calculates the similarity between two strings
-	 * @param a First string
-	 * @param b Second string
-	 * @returns A similarity score between 0 and 1
-	 */
-	private calculateStringSimilarity(a: string, b: string): number {
-		if (a === b) return 1;
-		if (a.length === 0 || b.length === 0) return 0;
-
-		// Simple Jaccard similarity for demonstration
-		const setA = new Set(a.split(""));
-		const setB = new Set(b.split(""));
-
-		const intersection = new Set([...setA].filter((x) => setB.has(x)));
-		const union = new Set([...setA, ...setB]);
-
-		return intersection.size / union.size;
 	}
 
 	/**

@@ -190,7 +190,9 @@ describe("standardizeDateFormat", () => {
 		expect(standardizeDateFormat("31/13/2023")).toBe("31/13/2023"); // Invalid month
 
 		// Dates with time components
-		expect(standardizeDateFormat("2023-12-31 12:34:56")).toBe("2023-12-31 12:34:56"); // Not handled by our function
+		expect(standardizeDateFormat("2023-12-31 12:34:56")).toBe(
+			"2023-12-31 12:34:56",
+		); // Not handled by our function
 	});
 });
 
@@ -244,26 +246,64 @@ describe("correctCommonSpellingMistakes", () => {
 	// Common spelling mistakes
 	test("should correct common spelling mistakes", () => {
 		expect(correctCommonSpellingMistakes("accomodate")).toBe("accommodate");
-		expect(correctCommonSpellingMistakes("alot of things")).toBe("a lot of things");
-		expect(correctCommonSpellingMistakes("at the begining")).toBe("at the beginning");
-		expect(correctCommonSpellingMistakes("I beleive you")).toBe("I believe you");
-		expect(correctCommonSpellingMistakes("check your calender")).toBe("check your calendar");
-		expect(correctCommonSpellingMistakes("definately correct")).toBe("definitely correct");
-		expect(correctCommonSpellingMistakes("don't embarass me")).toBe("don't embarrass me");
-		expect(correctCommonSpellingMistakes("proof of existance")).toBe("proof of existence");
+		expect(correctCommonSpellingMistakes("alot of things")).toBe(
+			"a lot of things",
+		);
+		expect(correctCommonSpellingMistakes("at the begining")).toBe(
+			"at the beginning",
+		);
+		expect(correctCommonSpellingMistakes("I beleive you")).toBe(
+			"I believe you",
+		);
+		expect(correctCommonSpellingMistakes("check your calender")).toBe(
+			"check your calendar",
+		);
+		expect(correctCommonSpellingMistakes("definately correct")).toBe(
+			"definitely correct",
+		);
+		expect(correctCommonSpellingMistakes("don't embarass me")).toBe(
+			"don't embarrass me",
+		);
+		expect(correctCommonSpellingMistakes("proof of existance")).toBe(
+			"proof of existence",
+		);
 		expect(correctCommonSpellingMistakes("bad grammer")).toBe("bad grammar");
-		expect(correctCommonSpellingMistakes("workplace harrassment")).toBe("workplace harassment");
-		expect(correctCommonSpellingMistakes("independant research")).toBe("independent research");
-		expect(correctCommonSpellingMistakes("liason officer")).toBe("liaison officer");
-		expect(correctCommonSpellingMistakes("new millenium")).toBe("new millennium");
-		expect(correctCommonSpellingMistakes("neccessary steps")).toBe("necessary steps");
-		expect(correctCommonSpellingMistakes("special occassion")).toBe("special occasion");
-		expect(correctCommonSpellingMistakes("it occured yesterday")).toBe("it occurred yesterday");
-		expect(correctCommonSpellingMistakes("in posession of")).toBe("in possession of");
-		expect(correctCommonSpellingMistakes("recieve a gift")).toBe("receive a gift");
-		expect(correctCommonSpellingMistakes("seperate issues")).toBe("separate issues");
-		expect(correctCommonSpellingMistakes("succesful project")).toBe("successful project");
-		expect(correctCommonSpellingMistakes("wait untill tomorrow")).toBe("wait until tomorrow");
+		expect(correctCommonSpellingMistakes("workplace harrassment")).toBe(
+			"workplace harassment",
+		);
+		expect(correctCommonSpellingMistakes("independant research")).toBe(
+			"independent research",
+		);
+		expect(correctCommonSpellingMistakes("liason officer")).toBe(
+			"liaison officer",
+		);
+		expect(correctCommonSpellingMistakes("new millenium")).toBe(
+			"new millennium",
+		);
+		expect(correctCommonSpellingMistakes("neccessary steps")).toBe(
+			"necessary steps",
+		);
+		expect(correctCommonSpellingMistakes("special occassion")).toBe(
+			"special occasion",
+		);
+		expect(correctCommonSpellingMistakes("it occured yesterday")).toBe(
+			"it occurred yesterday",
+		);
+		expect(correctCommonSpellingMistakes("in posession of")).toBe(
+			"in possession of",
+		);
+		expect(correctCommonSpellingMistakes("recieve a gift")).toBe(
+			"receive a gift",
+		);
+		expect(correctCommonSpellingMistakes("seperate issues")).toBe(
+			"separate issues",
+		);
+		expect(correctCommonSpellingMistakes("succesful project")).toBe(
+			"successful project",
+		);
+		expect(correctCommonSpellingMistakes("wait untill tomorrow")).toBe(
+			"wait until tomorrow",
+		);
 		expect(correctCommonSpellingMistakes("that's wierd")).toBe("that's weird");
 	});
 
@@ -277,12 +317,16 @@ describe("correctCommonSpellingMistakes", () => {
 
 	// Mixed text with spelling mistakes
 	test("should correct spelling mistakes in mixed text", () => {
-		expect(correctCommonSpellingMistakes("I will definately recieve it untill tomorrow")).toBe(
-			"I will definitely receive it until tomorrow"
-		);
-		expect(correctCommonSpellingMistakes("This is a seperate occassion that occured")).toBe(
-			"This is a separate occasion that occurred"
-		);
+		expect(
+			correctCommonSpellingMistakes(
+				"I will definately recieve it untill tomorrow",
+			),
+		).toBe("I will definitely receive it until tomorrow");
+		expect(
+			correctCommonSpellingMistakes(
+				"This is a seperate occassion that occured",
+			),
+		).toBe("This is a separate occasion that occurred");
 	});
 
 	// Words that don't need correction
@@ -290,13 +334,17 @@ describe("correctCommonSpellingMistakes", () => {
 		expect(correctCommonSpellingMistakes("accommodate")).toBe("accommodate");
 		expect(correctCommonSpellingMistakes("a lot")).toBe("a lot");
 		expect(correctCommonSpellingMistakes("beginning")).toBe("beginning");
-		expect(correctCommonSpellingMistakes("This is correct text")).toBe("This is correct text");
+		expect(correctCommonSpellingMistakes("This is correct text")).toBe(
+			"This is correct text",
+		);
 	});
 
 	// Empty string and non-matching text
 	test("should handle empty strings and non-matching text", () => {
 		expect(correctCommonSpellingMistakes("")).toBe("");
-		expect(correctCommonSpellingMistakes("No spelling mistakes here")).toBe("No spelling mistakes here");
+		expect(correctCommonSpellingMistakes("No spelling mistakes here")).toBe(
+			"No spelling mistakes here",
+		);
 		expect(correctCommonSpellingMistakes("12345")).toBe("12345");
 	});
 });

@@ -254,7 +254,6 @@ export class EntitySearchService {
 				// Boost exact matches
 				if (
 					entity.label &&
-					typeof entity.label === "string" &&
 					entity.label.toLowerCase() === query.toLowerCase()
 				) {
 					adjustedConfidence += 0.2;

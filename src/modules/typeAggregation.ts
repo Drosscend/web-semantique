@@ -44,8 +44,8 @@ export class TypeAggregationService {
 	constructor(config: Partial<TypeAggregationConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
 		consola.debug(
-				"Service d'agrégation de types initialisé avec la configuration :",
-				this.config,
+			"Service d'agrégation de types initialisé avec la configuration :",
+			this.config,
 		);
 	}
 
@@ -73,7 +73,9 @@ export class TypeAggregationService {
 
 			// Skip empty columns
 			if (typeCandidates.length === 0) {
-				consola.warn(`Aucun candidat de type pour la colonne ${header}, ignorée`);
+				consola.warn(
+					`Aucun candidat de type pour la colonne ${header}, ignorée`,
+				);
 				continue;
 			}
 
@@ -108,7 +110,7 @@ export class TypeAggregationService {
 			annotations.push(annotation);
 
 			consola.success(
-					`Colonne "${header}" annotée comme "${bestType.type.label}" avec une confiance de ${bestType.confidence.toFixed(2)}`,
+				`Colonne "${header}" annotée comme "${bestType.type.label}" avec une confiance de ${bestType.confidence.toFixed(2)}`,
 			);
 		}
 
@@ -138,7 +140,7 @@ export class TypeAggregationService {
 		if (relevantRelations.length === 0) return;
 
 		consola.debug(
-				`Application des améliorations de relation pour la colonne ${columnIndex} basées sur ${relevantRelations.length} relations`,
+			`Application des améliorations de relation pour la colonne ${columnIndex} basées sur ${relevantRelations.length} relations`,
 		);
 
 		// For each relation
@@ -179,7 +181,7 @@ export class TypeAggregationService {
 					candidate.confidence = Math.min(1.0, candidate.confidence + boost);
 
 					consola.debug(
-							`Confiance améliorée pour le type "${candidate.type.label}" de ${boost.toFixed(2)} basée sur la relation avec la colonne ${otherColumnIndex}`,
+						`Confiance améliorée pour le type "${candidate.type.label}" de ${boost.toFixed(2)} basée sur la relation avec la colonne ${otherColumnIndex}`,
 					);
 				}
 			}
@@ -298,4 +300,3 @@ export function aggregateColumnTypes(
 		columnRelations,
 	);
 }
-

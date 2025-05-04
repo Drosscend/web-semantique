@@ -187,28 +187,28 @@ export function standardizeCapitalization(value: string): string {
  */
 export function correctCommonSpellingMistakes(value: string): string {
 	const commonMistakes: Record<string, string> = {
-		"accomodate": "accommodate",
-		"alot": "a lot",
-		"begining": "beginning",
-		"beleive": "believe",
-		"calender": "calendar",
-		"definately": "definitely",
-		"embarass": "embarrass",
-		"existance": "existence",
-		"grammer": "grammar",
-		"harrassment": "harassment",
-		"independant": "independent",
-		"liason": "liaison",
-		"millenium": "millennium",
-		"neccessary": "necessary",
-		"occassion": "occasion",
-		"occured": "occurred",
-		"posession": "possession",
-		"recieve": "receive",
-		"seperate": "separate",
-		"succesful": "successful",
-		"untill": "until",
-		"wierd": "weird"
+		accomodate: "accommodate",
+		alot: "a lot",
+		begining: "beginning",
+		beleive: "believe",
+		calender: "calendar",
+		definately: "definitely",
+		embarass: "embarrass",
+		existance: "existence",
+		grammer: "grammar",
+		harrassment: "harassment",
+		independant: "independent",
+		liason: "liaison",
+		millenium: "millennium",
+		neccessary: "necessary",
+		occassion: "occasion",
+		occured: "occurred",
+		posession: "possession",
+		recieve: "receive",
+		seperate: "separate",
+		succesful: "successful",
+		untill: "until",
+		wierd: "weird",
 	};
 
 	// If there are no common mistakes defined, return the original value
@@ -224,8 +224,13 @@ export function correctCommonSpellingMistakes(value: string): string {
 		}
 
 		// If original has first letter capitalized, capitalize first letter of replacement
-		if (original[0] === original[0].toUpperCase() && original.slice(1) === original.slice(1).toLowerCase()) {
-			return replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase();
+		if (
+			original[0] === original[0].toUpperCase() &&
+			original.slice(1) === original.slice(1).toLowerCase()
+		) {
+			return (
+				replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase()
+			);
 		}
 
 		// Otherwise, use the replacement as is (lowercase)

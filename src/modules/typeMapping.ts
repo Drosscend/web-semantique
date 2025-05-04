@@ -331,7 +331,7 @@ export class TypeMappingService {
 		}
 
 		consola.debug(
-				`Initialisé avec ${KNOWN_TYPE_MAPPINGS.length} correspondances de types connues`,
+			`Initialisé avec ${KNOWN_TYPE_MAPPINGS.length} correspondances de types connues`,
 		);
 	}
 
@@ -378,7 +378,9 @@ export class TypeMappingService {
 	 * @returns The enhanced entity candidates
 	 */
 	enhanceCandidates(candidates: EntityCandidate[]): EntityCandidate[] {
-		consola.start("Amélioration des candidats d'entité avec les correspondances de types");
+		consola.start(
+			"Amélioration des candidats d'entité avec les correspondances de types",
+		);
 
 		const enhancedCandidates = candidates.map((candidate) => {
 			// Clone the candidate to avoid modifying the original
@@ -422,4 +424,3 @@ export class TypeMappingService {
 export function createTypeMappingService(): TypeMappingService {
 	return new TypeMappingService();
 }
-
