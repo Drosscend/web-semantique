@@ -38,7 +38,10 @@ export class URIAnalysisService {
 	 */
 	constructor(config: Partial<URIAnalysisConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug("Service d'analyse d'URI initialisé avec la configuration :", this.config);
+		consola.debug(
+			"Service d'analyse d'URI initialisé avec la configuration :",
+			this.config,
+		);
 	}
 
 	/**
@@ -83,9 +86,7 @@ export class URIAnalysisService {
 					);
 
 					for (const otherCandidate of sameRowCandidates) {
-						const value = (
-							otherCandidate.cell.cleanedValue || otherCandidate.cell.value
-						).toLowerCase();
+						const value = otherCandidate.cell.value.toLowerCase();
 
 						// Skip short values
 						if (value.length < this.config.minMatchLength) continue;
@@ -164,9 +165,7 @@ export class URIAnalysisService {
 				// For Wikidata URIs, extract the entity ID
 				if (uri.includes("wikidata.org/entity/")) {
 					const entityId = lastPart;
-					consola.debug(
-						`ID d'entité Wikidata extrait : ${entityId} de ${uri}`,
-					);
+					consola.debug(`ID d'entité Wikidata extrait : ${entityId} de ${uri}`);
 				}
 
 				// For DBpedia URIs, extract the resource name

@@ -18,7 +18,6 @@ export interface Cell {
 	value: string;
 	rowIndex: number;
 	columnIndex: number;
-	cleanedValue?: string;
 }
 
 /**

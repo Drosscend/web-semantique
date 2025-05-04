@@ -69,7 +69,7 @@ export class EntitySearchService {
 	 * @returns Promise resolving to an array of entity candidates
 	 */
 	async searchEntitiesForCell(cell: Cell): Promise<EntityCandidate[]> {
-		const query = cell.cleanedValue || cell.value;
+		const query = cell.value;
 
 		if (!query.trim()) {
 			consola.debug(

@@ -26,56 +26,56 @@ export async function loadCSV(
 	try {
 		consola.start(`Chargement du fichier CSV depuis ${filePath}`);
 
- 	const content = await Bun.file(filePath).text();
- 	const lines = content
- 		.split(/\r?\n/)
- 		.filter((line) => line.trim().length > 0);
+		const content = await Bun.file(filePath).text();
+		const lines = content
+			.split(/\r?\n/)
+			.filter((line) => line.trim().length > 0);
 
- 	if (lines.length === 0) {
- 		throw new Error("CSV file is empty");
- 	}
+		if (lines.length === 0) {
+			throw new Error("CSV file is empty");
+		}
 
- 	// Parse CSV lines properly handling quoted values
- 	const parseCSVLine = (line: string): string[] => {
- 		const result: string[] = [];
- 		let currentValue = "";
- 		let insideQuotes = false;
+		// Parse CSV lines properly handling quoted values
+		const parseCSVLine = (line: string): string[] => {
+			const result: string[] = [];
+			let currentValue = "";
+			let insideQuotes = false;
 
- 		for (let i = 0; i < line.length; i++) {
- 			const char = line[i];
+			for (let i = 0; i < line.length; i++) {
+				const char = line[i];
 
- 			// Handle quotes
- 			if (char === '"') {
- 				// Check if this is an escaped quote (double quote inside quoted value)
- 				if (insideQuotes && i + 1 < line.length && line[i + 1] === '"') {
- 					currentValue += '"';
- 					i++; // Skip the next quote
- 				} else {
- 					// Toggle quote state
- 					insideQuotes = !insideQuotes;
- 				}
- 			}
- 			// Handle delimiter
- 			else if (char === delimiter && !insideQuotes) {
- 				result.push(currentValue.trim());
- 				currentValue = "";
- 			}
- 			// Handle normal character
- 			else {
- 				currentValue += char;
- 			}
- 		}
+				// Handle quotes
+				if (char === '"') {
+					// Check if this is an escaped quote (double quote inside quoted value)
+					if (insideQuotes && i + 1 < line.length && line[i + 1] === '"') {
+						currentValue += '"';
+						i++; // Skip the next quote
+					} else {
+						// Toggle quote state
+						insideQuotes = !insideQuotes;
+					}
+				}
+				// Handle delimiter
+				else if (char === delimiter && !insideQuotes) {
+					result.push(currentValue.trim());
+					currentValue = "";
+				}
+				// Handle normal character
+				else {
+					currentValue += char;
+				}
+			}
 
- 		// Add the last value
- 		result.push(currentValue.trim());
- 		return result;
- 	};
+			// Add the last value
+			result.push(currentValue.trim());
+			return result;
+		};
 
- 	const headers = hasHeader
- 		? parseCSVLine(lines[0])
- 		: parseCSVLine(lines[0]).map((_, i) => `Column${i + 1}`);
+		const headers = hasHeader
+			? parseCSVLine(lines[0])
+			: parseCSVLine(lines[0]).map((_, i) => `Column${i + 1}`);
 
- 	const data = (hasHeader ? lines.slice(1) : lines).map(parseCSVLine);
+		const data = (hasHeader ? lines.slice(1) : lines).map(parseCSVLine);
 
 		consola.success(
 			`Fichier CSV chargé avec succès : ${headers.length} colonnes et ${data.length} lignes`,
@@ -121,7 +121,7 @@ export function cleanCellValue(value: string): string {
 	let cleaned = value.trim().replace(/\s+/g, " ");
 
 	// Normalize special characters (accents, diacritics)
-	cleaned = cleaned.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	cleaned = cleaned.normalize("NFD").replace(/\u0300-\u036f/g, "");
 
 	// Handle empty values
 	if (
@@ -171,11 +171,8 @@ export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 			// Skip empty values
 			if (value.trim() === "") continue;
 
-			const cleanedValue = cleanCellValue(value);
-
 			columnCells[columnIndex].push({
 				value,
-				cleanedValue,
 				rowIndex,
 				columnIndex,
 			});
@@ -218,85 +215,3 @@ function getRepresentativeSampleIndices(
 
 	return Array.from(indices).sort((a, b) => a - b);
 }
-
-/**
- * Analyzes a CSV table to identify potential data quality issues
- * @param table The CSV table to analyze
- * @returns An object containing analysis results
- */
-export function analyzeCSVData(table: CSVTable): {
-	emptyValues: number[][];
-	uniqueValues: Set<string>[];
-	valuePatterns: Map<string, number>[];
-} {
-	consola.start("Analyse de la qualité des données CSV");
-
-	const columnCount = table.headers.length;
-	const emptyValues: number[][] = Array.from({ length: columnCount }, () => []);
-
-	const uniqueValues: Set<string>[] = Array.from(
-		{ length: columnCount },
-		() => new Set(),
-	);
-
-	const valuePatterns: Map<string, number>[] = Array.from(
-		{ length: columnCount },
-		() => new Map(),
-	);
-
-	// Analyze each row
-	for (let rowIndex = 0; rowIndex < table.data.length; rowIndex++) {
-		const row = table.data[rowIndex];
-		for (let colIndex = 0; colIndex < row.length; colIndex++) {
-			if (colIndex >= columnCount) continue;
-
-			const value = row[colIndex];
-			// Check for empty values
-			if (value.trim() === "") {
-				emptyValues[colIndex].push(rowIndex);
-				continue;
-			}
-
-			// Track unique values
-			uniqueValues[colIndex].add(value);
-
-			// Identify patterns (numeric, text, date, etc.)
-			const pattern = getValuePattern(value);
-			valuePatterns[colIndex].set(
-				pattern,
-				(valuePatterns[colIndex].get(pattern) || 0) + 1,
-			);
-		}
-	}
-
-	// Log analysis results
-	for (let i = 0; i < columnCount; i++) {
-		consola.info(
-			`Colonne "${table.headers[i]}" : ${uniqueValues[i].size} valeurs uniques, ${emptyValues[i].length} valeurs vides`,
-		);
-	}
-
-	consola.success("Analyse de la qualité des données terminée");
-
-	return {
-		emptyValues,
-		uniqueValues,
-		valuePatterns,
-	};
-}
-
-/**
- * Determines the pattern of a value (numeric, text, date, etc.)
- * @param value The value to analyze
- * @returns A string representing the pattern
- */
-function getValuePattern(value: string): string {
-	if (/^\d+$/.test(value)) return "integer";
-	if (/^\d+\.\d+$/.test(value)) return "decimal";
-	if (/^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}$/.test(value)) return "date";
-	if (/^[A-Z][a-z]+$/.test(value)) return "capitalized_word";
-	if (/^[A-Z\s]+$/.test(value)) return "uppercase_text";
-	if (/^[a-z\s]+$/.test(value)) return "lowercase_text";
-	return "mixed_text";
-}
-

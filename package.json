@@ -6,7 +6,8 @@
 	"main": "dist/main.js",
 	"scripts": {
 		"format": "biome format --write",
-		"lint": "biome lint"
+		"lint": "biome lint",
+		"test": "bun test"
 	},
 	"dependencies": {
 		"consola": "^3.4.2"

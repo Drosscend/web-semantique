@@ -8,7 +8,7 @@
  */
 
 import { consola } from "consola";
-import type { CSVTable, Cell } from "../types";
+import type { Cell } from "../types";
 
 /**
  * Corrects a single cell value
@@ -38,16 +38,143 @@ export function correctCellValue(value: string): string {
 
 /**
  * Standardizes capitalization based on common patterns
+ * This function detects and handles various text patterns:
+ * 1. Acronyms (all uppercase) - preserved as is
+ * 2. Numbers and dates - preserved as is
+ * 3. camelCase and snake_case identifiers - preserved as is
+ * 4. Proper nouns - converted to Title Case
+ * 5. Titles - converted to Title Case with small words in lowercase
+ * 6. Sentences - converted to Sentence case
+ * 7. Mixed text with special characters - handled appropriately
+ *
  * @param value The value to standardize
  * @returns The value with standardized capitalization
  */
-function standardizeCapitalization(value: string): string {
+export function standardizeCapitalization(value: string): string {
 	// Skip if the value is all uppercase (likely an acronym)
 	if (value === value.toUpperCase() && value.length > 1) {
 		return value;
 	}
 
-	// TODO: Implement a more sophisticated capitalization algorithm
+	// Skip if the value is a number or date
+	if (
+		/^\d+(\.\d+)?$/.test(value) ||
+		/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}$/.test(value)
+	) {
+		return value;
+	}
+
+	// Patterns to standardize capitalization
+
+	// 1. Title Case for proper nouns (e.g., names, places)
+	// Words that should be capitalized as proper nouns
+	if (/^[a-zA-Z]+$/.test(value) && value.length > 2) {
+		// Single word that looks like a proper noun
+		return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+	}
+
+	// 2. Title Case for multi-word phrases that look like titles or names
+	if (/^[a-zA-Z\s]+$/.test(value) && value.includes(" ")) {
+		const words = value.split(" ");
+		return words
+			.map((word, index) => {
+				// Skip small words in titles (articles, conjunctions, prepositions)
+				// EXCEPT for the first word which should always be capitalized
+				const smallWords = [
+					"a",
+					"an",
+					"the",
+					"and",
+					"but",
+					"or",
+					"for",
+					"nor",
+					"on",
+					"at",
+					"to",
+					"from",
+					"by",
+					"with",
+					"in",
+					"of",
+					"de",
+					"du",
+					"la",
+					"le",
+					"les",
+					"des",
+					"un",
+					"une",
+				];
+
+				if (
+					index > 0 &&
+					(word.length <= 2 || smallWords.includes(word.toLowerCase()))
+				) {
+					return word.toLowerCase();
+				}
+
+				// Capitalize first letter of other words and the first word
+				return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+			})
+			.join(" ");
+	}
+
+	// 3. Sentence case for longer text
+	if (value.length > 10 && /[.!?]/.test(value)) {
+		// Split by sentence endings
+		return value
+			.split(/([.!?]\s+)/)
+			.map((part, index) => {
+				// If it's a sentence start, capitalize first letter
+				if (index % 2 === 0 && part.length > 0) {
+					return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+				}
+				return part;
+			})
+			.join("");
+	}
+
+	// 4. Handle camelCase and snake_case
+	// Check for camelCase pattern (lowercase start, then at least one uppercase letter)
+	// This needs to be checked before any other transformations
+	// 1. Starts with lowercase letter(s)
+	// 2. Contains at least one uppercase letter
+	// 3. No spaces or special characters (except underscores)
+	if (
+		/^[a-z]+/.test(value) &&
+		/[A-Z]/.test(value) &&
+		/^[a-zA-Z0-9_]+$/.test(value)
+	) {
+		// This is a camelCase identifier, preserve it exactly as is
+		return value;
+	}
+
+	// Check for snake_case pattern
+	if (/^[a-zA-Z0-9]*_[a-zA-Z0-9_]*$/.test(value)) {
+		// This is a snake_case identifier, preserve it exactly as is
+		return value;
+	}
+
+	// 5. Handle mixed text with special characters (like "product_id: 12345")
+	if (value.includes(":") || value.includes("-") || value.includes("=")) {
+		// For key-value pairs or similar patterns, capitalize the first part
+		const parts = value.split(/[:=-]/);
+		if (parts.length > 1) {
+			const firstPart = parts[0].trim();
+			// Apply sentence case to the first part
+			const capitalizedFirstPart =
+				firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
+			// Join back with the rest of the parts
+			return capitalizedFirstPart + value.substring(firstPart.length);
+		}
+	}
+
+	// Default: If no specific pattern is matched, convert to sentence case
+	// (first letter uppercase, rest lowercase)
+	if (value.length > 0) {
+		return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+	}
 
 	return value;
 }
@@ -69,8 +196,9 @@ function correctCommonSpellingMistakes(value: string): string {
  * @returns The value with standardized date format
  */
 function standardizeDateFormat(value: string): string {
+	// TODO: Implement a more sophisticated date format standardization algorithm with date-fns maybe
 	// Check if the value looks like a date
-	const dateRegex = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/;
+	const dateRegex = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/;
 	const match = value.match(dateRegex);
 
 	if (match) {
@@ -134,9 +262,7 @@ export function correctCells(cells: Cell[][]): Cell[][] {
 	const correctedCells = cells.map((columnCells) =>
 		columnCells.map((cell) => ({
 			...cell,
-			cleanedValue: cell.cleanedValue
-				? correctCellValue(cell.cleanedValue)
-				: correctCellValue(cell.value),
+			value: correctCellValue(cell.value),
 		})),
 	);
 
@@ -144,4 +270,3 @@ export function correctCells(cells: Cell[][]): Cell[][] {
 
 	return correctedCells;
 }
-
