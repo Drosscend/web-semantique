@@ -9,6 +9,7 @@ import { describe, expect, test } from "bun:test";
 import {
 	correctCellValue,
 	standardizeCapitalization,
+	standardizeDateFormat,
 } from "../modules/dataCorrection";
 
 describe("standardizeCapitalization", () => {
@@ -114,5 +115,79 @@ describe("correctCellValue", () => {
 			"John Doe from New York",
 		);
 		expect(correctCellValue("product_id: 12345")).toBe("Product_id: 12345");
+	});
+});
+
+describe("standardizeDateFormat", () => {
+	// European date formats (day first)
+	test("should standardize European date formats (day first)", () => {
+		// DD/MM/YYYY format
+		expect(standardizeDateFormat("31/12/2023")).toBe("2023-12-31");
+		expect(standardizeDateFormat("01/12/2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("1/12/2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("31/1/2023")).toBe("2023-01-31");
+		expect(standardizeDateFormat("1/1/2023")).toBe("2023-01-01");
+
+		// DD.MM.YYYY format
+		expect(standardizeDateFormat("31.12.2023")).toBe("2023-12-31");
+		expect(standardizeDateFormat("01.12.2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("1.12.2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("31.1.2023")).toBe("2023-01-31");
+		expect(standardizeDateFormat("1.1.2023")).toBe("2023-01-01");
+
+		// DD-MM-YYYY format
+		expect(standardizeDateFormat("31-12-2023")).toBe("2023-12-31");
+		expect(standardizeDateFormat("01-12-2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("1-12-2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("31-1-2023")).toBe("2023-01-31");
+		expect(standardizeDateFormat("1-1-2023")).toBe("2023-01-01");
+	});
+
+	// US date formats (month first)
+	test("should standardize US date formats (month first)", () => {
+		expect(standardizeDateFormat("12/31/2023")).toBe("2023-12-31");
+		expect(standardizeDateFormat("12/01/2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("12/1/2023")).toBe("2023-12-01");
+		expect(standardizeDateFormat("1/31/2023")).toBe("2023-01-31");
+		expect(standardizeDateFormat("1/1/2023")).toBe("2023-01-01");
+	});
+
+	// Short year formats
+	test("should handle 2-digit years correctly", () => {
+		// European format with 2-digit year
+		expect(standardizeDateFormat("31/12/23")).toBe("2023-12-31");
+		expect(standardizeDateFormat("01/01/90")).toBe("1990-01-01"); // 20th century
+		expect(standardizeDateFormat("01/01/30")).toBe("2030-01-01"); // 21st century
+
+		// US format with 2-digit year
+		expect(standardizeDateFormat("12/31/23")).toBe("2023-12-31");
+		expect(standardizeDateFormat("01/01/90")).toBe("1990-01-01"); // 20th century
+		expect(standardizeDateFormat("01/01/30")).toBe("2030-01-01"); // 21st century
+	});
+
+	// ISO and other formats
+	test("should handle ISO and other common formats", () => {
+		// ISO format (should remain unchanged)
+		expect(standardizeDateFormat("2023-12-31")).toBe("2023-12-31");
+		expect(standardizeDateFormat("2023-01-01")).toBe("2023-01-01");
+
+		// Other formats
+		expect(standardizeDateFormat("2023/12/31")).toBe("2023-12-31");
+		expect(standardizeDateFormat("2023.12.31")).toBe("2023-12-31");
+	});
+
+	// Edge cases
+	test("should handle edge cases appropriately", () => {
+		// Non-date values should be returned unchanged
+		expect(standardizeDateFormat("not a date")).toBe("not a date");
+		expect(standardizeDateFormat("")).toBe("");
+		expect(standardizeDateFormat("12345")).toBe("12345"); // Too short to be a date
+
+		// Invalid dates should be returned unchanged
+		expect(standardizeDateFormat("32/12/2023")).toBe("32/12/2023"); // Invalid day
+		expect(standardizeDateFormat("31/13/2023")).toBe("31/13/2023"); // Invalid month
+
+		// Dates with time components
+		expect(standardizeDateFormat("2023-12-31 12:34:56")).toBe("2023-12-31 12:34:56"); // Not handled by our function
 	});
 });
