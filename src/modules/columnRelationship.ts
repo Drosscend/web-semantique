@@ -404,7 +404,7 @@ export class ColumnRelationshipService {
 		columnCandidates: EntityCandidate[][],
 	): ColumnRelation[] {
 		logger.start(
-			`Analyzing relationships between ${columnCandidates.length} columns`,
+			`Analyse des relations entre ${columnCandidates.length} colonnes`,
 		);
 
 		const relations: ColumnRelation[] = [];

@@ -121,7 +121,7 @@ export function cleanCellValue(value: string): string {
 	let cleaned = value.trim().replace(/\s+/g, " ");
 
 	// Normalize special characters (accents, diacritics)
-	cleaned = cleaned.normalize("NFD").replace(/\u0300-\u036f/g, "");
+	cleaned = cleaned.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 	// Handle empty values
 	if (
