@@ -183,6 +183,15 @@ export async function saveAnnotationsToCSV(
 			csvContent += `${fileName},${annotation.columnIndex},${annotation.assignedType.uri}\n`;
 		}
 
+		// Check if file exists and append to it instead of replacing
+		const { existsSync } = await import("node:fs");
+		if (existsSync(outputPath)) {
+			// Read existing content
+			const existingContent = await Bun.file(outputPath).text();
+			// Append new content to existing content
+			csvContent = existingContent + csvContent;
+		}
+
 		// Save the CSV file
 		await Bun.write(outputPath, csvContent);
 
