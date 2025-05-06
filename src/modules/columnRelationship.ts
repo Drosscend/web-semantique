@@ -7,7 +7,10 @@
  * 3. Leveraging the context provided by other columns to improve type detection
  */
 
-import { ColumnRelationshipConfig, DEFAULT_COLUMN_RELATIONSHIP_CONFIG } from "../config";
+import {
+	ColumnRelationshipConfig,
+	DEFAULT_COLUMN_RELATIONSHIP_CONFIG,
+} from "../config";
 import { logger } from "../logger";
 import type { ColumnRelation, EntityCandidate, SemanticType } from "../types";
 

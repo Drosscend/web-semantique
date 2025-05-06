@@ -10,14 +10,14 @@ import type { CTAConfig } from "./types";
 
 /**
  * Main application configuration
- * 
+ *
  * These settings control the overall behavior of the CTA algorithm.
  * Adjusting these parameters can significantly impact performance, accuracy, and resource usage.
  */
 export const DEFAULT_CTA_CONFIG: CTAConfig = {
 	/**
 	 * Number of rows to sample from the CSV for type detection
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values improve accuracy by analyzing more data but increase processing time
 	 * - Lower values speed up processing but may reduce accuracy, especially for heterogeneous columns
@@ -28,7 +28,7 @@ export const DEFAULT_CTA_CONFIG: CTAConfig = {
 
 	/**
 	 * Minimum confidence threshold for type assignment
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values (closer to 1.0) ensure more reliable type assignments but may leave some columns untyped
 	 * - Lower values increase coverage but may introduce incorrect type assignments
@@ -39,7 +39,7 @@ export const DEFAULT_CTA_CONFIG: CTAConfig = {
 
 	/**
 	 * Whether to analyze relationships between columns
-	 * 
+	 *
 	 * Impact:
 	 * - When enabled, improves accuracy by considering semantic relationships between columns
 	 * - Particularly helpful for related columns (e.g., country-capital, person-profession)
@@ -50,7 +50,7 @@ export const DEFAULT_CTA_CONFIG: CTAConfig = {
 
 	/**
 	 * Whether to analyze URIs for additional type information
-	 * 
+	 *
 	 * Impact:
 	 * - When enabled, extracts additional information from entity URIs to improve type detection
 	 * - Helps with disambiguation when entities have similar labels
@@ -61,7 +61,7 @@ export const DEFAULT_CTA_CONFIG: CTAConfig = {
 
 	/**
 	 * SPARQL endpoints for knowledge base access
-	 * 
+	 *
 	 * Impact:
 	 * - Using alternative endpoints can improve performance or enable offline processing
 	 * - Custom endpoints may have different rate limits or query capabilities
@@ -75,7 +75,7 @@ export const DEFAULT_CTA_CONFIG: CTAConfig = {
 
 /**
  * Configuration for column relationship analysis
- * 
+ *
  * These settings control how relationships between columns are detected and used.
  * Column relationships help improve type detection by leveraging semantic connections.
  */
@@ -97,7 +97,7 @@ export interface ColumnRelationshipConfig {
 export const DEFAULT_COLUMN_RELATIONSHIP_CONFIG: ColumnRelationshipConfig = {
 	/**
 	 * Minimum confidence threshold for accepting a relationship between columns
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values ensure only strong relationships are considered, reducing false positives
 	 * - Lower values capture more potential relationships but may introduce noise
@@ -108,7 +108,7 @@ export const DEFAULT_COLUMN_RELATIONSHIP_CONFIG: ColumnRelationshipConfig = {
 
 	/**
 	 * Maximum number of relationships to consider for each column
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values consider more potential relationships but increase complexity
 	 * - Lower values focus on the strongest relationships, improving performance
@@ -120,7 +120,7 @@ export const DEFAULT_COLUMN_RELATIONSHIP_CONFIG: ColumnRelationshipConfig = {
 
 /**
  * Configuration for entity search
- * 
+ *
  * These settings control how entities are searched and matched in knowledge bases.
  * Entity search is a critical step that affects the quality of type detection.
  */
@@ -157,7 +157,7 @@ export interface EntitySearchConfig {
 export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 	/**
 	 * Maximum number of entity candidates to consider for each cell
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values capture more potential matches but increase processing time
 	 * - Lower values focus on the strongest matches, improving performance
@@ -168,7 +168,7 @@ export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 
 	/**
 	 * Minimum confidence threshold for accepting an entity match
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values ensure more reliable entity matches but may reduce coverage
 	 * - Lower values increase coverage but may introduce incorrect matches
@@ -179,7 +179,7 @@ export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 
 	/**
 	 * Whether to use Wikidata as a knowledge base
-	 * 
+	 *
 	 * Impact:
 	 * - Wikidata provides broad coverage across many domains
 	 * - Disabling reduces API calls and improves performance
@@ -189,7 +189,7 @@ export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 
 	/**
 	 * Whether to use DBpedia as a knowledge base
-	 * 
+	 *
 	 * Impact:
 	 * - DBpedia provides rich type hierarchies and domain-specific information
 	 * - Disabling reduces API calls and improves performance
@@ -199,7 +199,7 @@ export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 
 	/**
 	 * Language code for entity search
-	 * 
+	 *
 	 * Impact:
 	 * - Affects entity matching in multilingual knowledge bases
 	 * - Should match the primary language of your dataset
@@ -210,7 +210,7 @@ export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 
 /**
  * Configuration for type aggregation
- * 
+ *
  * These settings control how types are aggregated and selected for each column.
  * Type aggregation is the final step that determines the assigned type for each column.
  */
@@ -232,7 +232,7 @@ export interface TypeAggregationConfig {
 export const DEFAULT_TYPE_AGGREGATION_CONFIG: TypeAggregationConfig = {
 	/**
 	 * Minimum confidence threshold for accepting a type assignment
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values ensure more reliable type assignments but may leave some columns untyped
 	 * - Lower values increase coverage but may introduce incorrect type assignments
@@ -243,7 +243,7 @@ export const DEFAULT_TYPE_AGGREGATION_CONFIG: TypeAggregationConfig = {
 
 	/**
 	 * Factor by which to boost type scores based on column relationships
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values give more weight to relationships between columns
 	 * - Lower values reduce the influence of relationships
@@ -256,7 +256,7 @@ export const DEFAULT_TYPE_AGGREGATION_CONFIG: TypeAggregationConfig = {
 
 /**
  * Configuration for type extraction
- * 
+ *
  * These settings control how types are extracted from entity candidates.
  * Type extraction determines the potential semantic types for each column.
  */
@@ -283,7 +283,7 @@ export interface TypeExtractionConfig {
 export const DEFAULT_TYPE_EXTRACTION_CONFIG: TypeExtractionConfig = {
 	/**
 	 * Minimum confidence threshold for accepting a type
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values ensure more reliable types but may reduce the variety of candidates
 	 * - Lower values increase the variety of type candidates but may introduce noise
@@ -295,7 +295,7 @@ export const DEFAULT_TYPE_EXTRACTION_CONFIG: TypeExtractionConfig = {
 
 	/**
 	 * Maximum number of types to consider for each column
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values consider more potential types but increase processing time
 	 * - Lower values focus on the strongest type candidates, improving performance
@@ -306,7 +306,7 @@ export const DEFAULT_TYPE_EXTRACTION_CONFIG: TypeExtractionConfig = {
 
 	/**
 	 * Whether to include parent types in the type hierarchy
-	 * 
+	 *
 	 * Impact:
 	 * - When enabled, includes more general types in the hierarchy (e.g., "City" → "Settlement" → "Place")
 	 * - Improves coverage by considering more general types when specific ones have low confidence
@@ -318,7 +318,7 @@ export const DEFAULT_TYPE_EXTRACTION_CONFIG: TypeExtractionConfig = {
 
 /**
  * Configuration for URI analysis
- * 
+ *
  * These settings control how URIs are analyzed to improve entity matching.
  * URI analysis can extract additional context from entity URIs to enhance type detection.
  */
@@ -340,7 +340,7 @@ export interface URIAnalysisConfig {
 export const DEFAULT_URI_ANALYSIS_CONFIG: URIAnalysisConfig = {
 	/**
 	 * Amount by which to boost confidence when a match is found in a URI
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values give more weight to URI matches, potentially improving disambiguation
 	 * - Lower values reduce the influence of URI patterns
@@ -352,7 +352,7 @@ export const DEFAULT_URI_ANALYSIS_CONFIG: URIAnalysisConfig = {
 
 	/**
 	 * Minimum length of a string to consider for matching in URIs
-	 * 
+	 *
 	 * Impact:
 	 * - Higher values reduce false positives by requiring longer matches
 	 * - Lower values increase sensitivity but may introduce spurious matches

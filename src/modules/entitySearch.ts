@@ -13,7 +13,13 @@ import { DEFAULT_ENTITY_SEARCH_CONFIG, EntitySearchConfig } from "../config";
 import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
-import type { CTAConfig, Cell, Entity, EntityCandidate, SemanticType } from "../types";
+import type {
+	CTAConfig,
+	Cell,
+	Entity,
+	EntityCandidate,
+	SemanticType,
+} from "../types";
 
 /**
  * Service for searching entities across knowledge bases
@@ -105,37 +111,42 @@ export class EntitySearchService {
 					// For DBpedia entities, try to find equivalent in Wikidata
 					if (entity.source === "DBpedia") {
 						// Extract the resource name from DBpedia URI
-						const resourceName = entity.uri.split('/').pop();
+						const resourceName = entity.uri.split("/").pop();
 						if (resourceName) {
 							// Try to find the entity in Wikidata by label
-							const wikidataEntities = await this.wikidataService.searchEntities(
-								resourceName.replace(/_/g, ' '),
-								this.config.language,
-								1
-							);
+							const wikidataEntities =
+								await this.wikidataService.searchEntities(
+									resourceName.replace(/_/g, " "),
+									this.config.language,
+									1,
+								);
 							if (wikidataEntities.length > 0) {
-								wikidataTypes = await this.wikidataService.getEntityTypes(wikidataEntities[0].uri);
+								wikidataTypes = await this.wikidataService.getEntityTypes(
+									wikidataEntities[0].uri,
+								);
 							}
 						}
-					} 
+					}
 					// For Wikidata entities, try to find equivalent in DBpedia
 					else {
 						// Extract the entity ID from Wikidata URI
-						const entityId = entity.uri.split('/').pop();
+						const entityId = entity.uri.split("/").pop();
 						if (entityId) {
 							// Try to find the entity in DBpedia by label
 							const dbpediaEntities = await this.dbpediaService.searchEntities(
 								entity.label,
-								1
+								1,
 							);
 							if (dbpediaEntities.length > 0) {
-								dbpediaTypes = await this.dbpediaService.getEntityTypes(dbpediaEntities[0].uri);
+								dbpediaTypes = await this.dbpediaService.getEntityTypes(
+									dbpediaEntities[0].uri,
+								);
 							}
 						}
 					}
 				} catch (crossSourceError) {
 					logger.debug(
-						`Impossible de récupérer les types de l'autre source pour l'entité ${entity.uri}: ${crossSourceError instanceof Error ? crossSourceError.message : String(crossSourceError)}`
+						`Impossible de récupérer les types de l'autre source pour l'entité ${entity.uri}: ${crossSourceError instanceof Error ? crossSourceError.message : String(crossSourceError)}`,
 					);
 				}
 

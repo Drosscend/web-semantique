@@ -8,7 +8,10 @@
  * 4. Producing the final result of annotation
  */
 
-import { DEFAULT_TYPE_AGGREGATION_CONFIG, TypeAggregationConfig } from "../config";
+import {
+	DEFAULT_TYPE_AGGREGATION_CONFIG,
+	TypeAggregationConfig,
+} from "../config";
 import { logger } from "../logger";
 import type {
 	ColumnRelation,

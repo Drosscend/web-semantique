@@ -14,7 +14,7 @@
  */
 
 import { mkdir } from "node:fs/promises";
-import { join, basename } from "node:path";
+import { basename, join } from "node:path";
 import { DEFAULT_CTA_CONFIG } from "./config";
 import { logger } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
