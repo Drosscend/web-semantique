@@ -84,6 +84,11 @@ export interface CTAConfig {
 		wikidata?: string;
 		dbpedia?: string;
 	};
+	cache?: {
+		wikidataMaxSize?: number; // Maximum number of entries in the Wikidata cache
+		dbpediaMaxSize?: number; // Maximum number of entries in the DBpedia cache
+		maxAge?: number; // Maximum age of cache entries in milliseconds
+	};
 }
 
 /**

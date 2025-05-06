@@ -7,6 +7,7 @@
  */
 
 import type { CTAConfig } from "./types";
+import { CacheServiceConfig, DEFAULT_CACHE_SERVICE_CONFIG } from "./services/CacheService";
 
 /**
  * Main application configuration
@@ -71,6 +72,17 @@ export const DEFAULT_CTA_CONFIG: CTAConfig = {
 		wikidata: "https://query.wikidata.org/sparql",
 		dbpedia: "https://dbpedia.org/sparql",
 	},
+
+	/**
+	 * Cache configuration for SPARQL queries
+	 * 
+	 * Impact:
+	 * - Caching significantly improves performance by reducing API calls
+	 * - Larger cache sizes improve hit rates but increase memory usage
+	 * - Setting maxAge ensures data freshness but reduces cache effectiveness
+	 * - Adjust based on the diversity of queries and available memory
+	 */
+	cache: DEFAULT_CACHE_SERVICE_CONFIG,
 };
 
 /**

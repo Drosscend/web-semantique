@@ -11,6 +11,7 @@ import { DBpediaServiceConfig, DEFAULT_DBPEDIA_SERVICE_CONFIG } from "../config"
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
+import { cacheService } from "./CacheService";
 
 /**
  * Service for interacting with DBpedia
@@ -40,6 +41,20 @@ export class DBpediaService {
 		try {
 			logger.debug(`Recherche dans DBpedia pour : "${query}"`);
 
+			// Generate a cache key for this search
+			const cacheKey = cacheService.generateCacheKey("dbpedia-lookup", { 
+				query, 
+				limit 
+			});
+
+			// Check if the result is in the cache
+			const cachedResult = cacheService.getFromDBpediaCache(cacheKey);
+			if (cachedResult !== undefined) {
+				logger.debug(`Utilisation du cache pour la recherche de "${query}" dans DBpedia`);
+				return cachedResult;
+			}
+
+			// If not in cache, make the API call
 			const url = new URL(this.config.lookupEndpoint);
 			url.searchParams.append("query", query);
 			url.searchParams.append("maxResults", limit.toString());
@@ -88,6 +103,9 @@ export class DBpediaService {
 				};
 			});
 
+			// Cache the result
+			cacheService.setInDBpediaCache(cacheKey, entities);
+
 			logger.debug(
 				`Trouvé ${entities.length} entités dans DBpedia pour "${query}"`,
 			);
@@ -117,6 +135,17 @@ export class DBpediaService {
         }
       `;
 
+			// Generate a cache key for this query
+			const cacheKey = cacheService.generateCacheKey(query, { entityUri });
+
+			// Check if the result is in the cache
+			const cachedResult = cacheService.getFromDBpediaCache(cacheKey);
+			if (cachedResult !== undefined) {
+				logger.debug(`Utilisation du cache pour les types de l'entité ${entityUri}`);
+				return cachedResult;
+			}
+
+			// If not in cache, make the API call
 			const url = new URL(this.config.sparqlEndpoint);
 			url.searchParams.append("query", query);
 			url.searchParams.append("format", "json");
@@ -152,6 +181,9 @@ export class DBpediaService {
 				},
 			);
 
+			// Cache the result
+			cacheService.setInDBpediaCache(cacheKey, types);
+
 			logger.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
 			return types;
 		} catch (error) {
@@ -178,6 +210,17 @@ export class DBpediaService {
         }
       `;
 
+			// Generate a cache key for this query
+			const cacheKey = cacheService.generateCacheKey(query, { typeUri });
+
+			// Check if the result is in the cache
+			const cachedResult = cacheService.getFromDBpediaCache(cacheKey);
+			if (cachedResult !== undefined) {
+				logger.debug(`Utilisation du cache pour les types parents de ${typeUri}`);
+				return cachedResult;
+			}
+
+			// If not in cache, make the API call
 			const url = new URL(this.config.sparqlEndpoint);
 			url.searchParams.append("query", query);
 			url.searchParams.append("format", "json");
@@ -204,6 +247,9 @@ export class DBpediaService {
 			const parentTypes = data.results.bindings.map(
 				(binding: any) => binding.parentType.value,
 			);
+
+			// Cache the result
+			cacheService.setInDBpediaCache(cacheKey, parentTypes);
 
 			logger.debug(
 				`Trouvé ${parentTypes.length} types parents pour ${typeUri}`,

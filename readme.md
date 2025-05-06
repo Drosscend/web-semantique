@@ -139,6 +139,10 @@ Options disponibles :
 | `--confidence=N.N` | Seuil de confiance minimum pour l'attribution de type | 0.3 |
 | `--no-relations` | Désactive l'analyse des relations entre colonnes | (activé) |
 | `--no-uri-analysis` | Désactive l'analyse des URI | (activé) |
+| `--wikidata-cache=N` | Taille maximale du cache Wikidata | 1000 |
+| `--dbpedia-cache=N` | Taille maximale du cache DBpedia | 1000 |
+| `--cache-max-age=N` | Durée de vie maximale des entrées du cache (en ms) | (illimité) |
+| `--no-cache` | Désactive complètement le cache | (activé) |
 | `--help` | Affiche l'aide et les informations d'utilisation | - |
 
 ### Utilisation programmatique
@@ -154,7 +158,12 @@ async function main() {
     sampleSize: 20,                // Taille de l'échantillon
     confidenceThreshold: 0.3,      // Seuil de confiance
     useColumnRelations: true,      // Utiliser l'analyse des relations entre colonnes
-    useURIAnalysis: true           // Utiliser l'analyse des URI
+    useURIAnalysis: true,          // Utiliser l'analyse des URI
+    cache: {
+      wikidataMaxSize: 1000,       // Taille maximale du cache Wikidata
+      dbpediaMaxSize: 1000,        // Taille maximale du cache DBpedia
+      maxAge: undefined            // Durée de vie maximale des entrées du cache (en ms)
+    }
     // Toutes les configurations sont centralisées dans src/config.ts
   });
 
@@ -206,6 +215,9 @@ Les options principales de l'algorithme CTA sont les suivantes :
 | `useURIAnalysis` | Analyser les URI pour des informations supplémentaires | true | Aide à la désambiguïsation des entités |
 | `sparqlEndpoints.wikidata` | URL du point de terminaison SPARQL Wikidata | https://query.wikidata.org/sparql | Accès aux données Wikidata |
 | `sparqlEndpoints.dbpedia` | URL du point de terminaison SPARQL DBpedia | https://dbpedia.org/sparql | Accès aux données DBpedia |
+| `cache.wikidataMaxSize` | Taille maximale du cache Wikidata | 1000 | Équilibre entre taux de succès du cache et utilisation de la mémoire |
+| `cache.dbpediaMaxSize` | Taille maximale du cache DBpedia | 1000 | Équilibre entre taux de succès du cache et utilisation de la mémoire |
+| `cache.maxAge` | Durée de vie maximale des entrées du cache (en ms) | undefined | Fraîcheur des données vs efficacité du cache |
 
 Ces options peuvent être configurées via la ligne de commande (voir section [Options de ligne de commande](#options-de-ligne-de-commande)) ou programmatiquement. Voici des détails sur l'impact de chaque paramètre :
 
@@ -257,6 +269,26 @@ Permet de configurer les points d'accès SPARQL pour Wikidata et DBpedia.
 - **Points d'accès alternatifs** : Peuvent améliorer les performances ou permettre un traitement hors ligne
 - **Attention** : Les points d'accès personnalisés peuvent avoir des limites de taux ou des capacités de requête différentes
 - **Prérequis** : S'assurer que le point d'accès prend en charge les mêmes modèles de requête
+
+#### cache
+
+Configure le système de cache pour les requêtes SPARQL à Wikidata et DBpedia.
+
+**Impact :**
+- **wikidataMaxSize** : 
+  - **Valeurs plus élevées** : Améliorent le taux de succès du cache mais augmentent l'utilisation de la mémoire
+  - **Valeurs plus basses** : Réduisent l'utilisation de la mémoire mais peuvent diminuer le taux de succès du cache
+  - **Recommandation** : Ajustez en fonction de la diversité des requêtes et de la mémoire disponible
+
+- **dbpediaMaxSize** : 
+  - **Valeurs plus élevées** : Améliorent le taux de succès du cache mais augmentent l'utilisation de la mémoire
+  - **Valeurs plus basses** : Réduisent l'utilisation de la mémoire mais peuvent diminuer le taux de succès du cache
+  - **Recommandation** : Ajustez en fonction de la diversité des requêtes et de la mémoire disponible
+
+- **maxAge** : 
+  - **Définir une valeur** (en millisecondes) : Assure la fraîcheur des données mais réduit l'efficacité du cache
+  - **Non défini** (undefined) : Les entrées expirent uniquement via l'éviction LRU (Least Recently Used)
+  - **Recommandation** : Utile pour les données qui changent périodiquement, mais généralement non nécessaire pour les ontologies qui évoluent lentement
 
 ### Configurations des modules
 
@@ -366,6 +398,11 @@ Le projet est organisé par domaines fonctionnels pour faciliter la maintenance 
     - Recherche d'entités
     - Récupération des types via P31
     - Gestion des requêtes SPARQL
+  - `CacheService.ts`: Service de cache pour les requêtes SPARQL
+    - Cache différencié pour Wikidata et DBpedia
+    - Génération de clés de cache intelligentes
+    - Méthodes d'invalidation et de vidage du cache
+    - Logging des hits et misses du cache
 
 - `src/index.ts`: Point d'entrée principal
   - Orchestration de toutes les étapes de l'algorithme

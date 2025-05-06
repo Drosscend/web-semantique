@@ -234,6 +234,21 @@ OPTIONS:
   --no-uri-analysis       Désactive l'analyse des URI
                           Accélère légèrement le traitement mais peut réduire la précision
 
+  --wikidata-cache=N      Taille maximale du cache Wikidata (défaut: 1000)
+                          Valeurs plus élevées: meilleur taux de succès du cache, plus de mémoire utilisée
+                          Valeurs plus basses: moins de mémoire utilisée, taux de succès potentiellement réduit
+
+  --dbpedia-cache=N       Taille maximale du cache DBpedia (défaut: 1000)
+                          Valeurs plus élevées: meilleur taux de succès du cache, plus de mémoire utilisée
+                          Valeurs plus basses: moins de mémoire utilisée, taux de succès potentiellement réduit
+
+  --cache-max-age=N       Durée de vie maximale des entrées du cache en millisecondes
+                          Non spécifié: les entrées expirent uniquement via l'éviction LRU
+                          Spécifié: assure la fraîcheur des données mais réduit l'efficacité du cache
+
+  --no-cache              Désactive complètement le cache
+                          Utile pour les tests ou pour forcer des requêtes fraîches
+
 CONFIGURATION AVANCÉE:
   Des options de configuration plus avancées sont disponibles via l'API programmatique
   et dans le fichier src/config.ts. Consultez le README pour plus de détails.
@@ -243,6 +258,9 @@ EXEMPLES:
   bun run src\\index.ts data\\test.csv --sample=20 --confidence=0.5
   bun run src\\index.ts data\\test.csv output\\mes_annotations.json --no-relations
   bun run src\\index.ts data\\test.csv --sample=50 --no-uri-analysis
+  bun run src\\index.ts data\\test.csv --wikidata-cache=2000 --dbpedia-cache=2000
+  bun run src\\index.ts data\\test.csv --cache-max-age=3600000 # 1 heure
+  bun run src\\index.ts data\\test.csv --no-cache # Désactive le cache
 
 Pour plus d'informations, consultez le README.md
 `);
@@ -333,6 +351,61 @@ async function main() {
 		if (args.includes("--no-uri-analysis")) {
 			config.useURIAnalysis = false;
 			logger.info("Analyse des URI désactivée");
+		}
+
+		// Initialize cache configuration if not present
+		if (!config.cache) {
+			config.cache = {};
+		}
+
+		// Parse Wikidata cache size
+		const wikidataCacheArg = args.find((arg) => arg.startsWith("--wikidata-cache="));
+		if (wikidataCacheArg) {
+			const cacheSize = Number.parseInt(wikidataCacheArg.split("=")[1], 10);
+			if (!Number.isNaN(cacheSize) && cacheSize >= 0) {
+				config.cache.wikidataMaxSize = cacheSize;
+				logger.info(`Taille du cache Wikidata configurée à ${cacheSize}`);
+			} else {
+				logger.warn(
+					"Valeur invalide pour --wikidata-cache, utilisation de la valeur par défaut",
+				);
+			}
+		}
+
+		// Parse DBpedia cache size
+		const dbpediaCacheArg = args.find((arg) => arg.startsWith("--dbpedia-cache="));
+		if (dbpediaCacheArg) {
+			const cacheSize = Number.parseInt(dbpediaCacheArg.split("=")[1], 10);
+			if (!Number.isNaN(cacheSize) && cacheSize >= 0) {
+				config.cache.dbpediaMaxSize = cacheSize;
+				logger.info(`Taille du cache DBpedia configurée à ${cacheSize}`);
+			} else {
+				logger.warn(
+					"Valeur invalide pour --dbpedia-cache, utilisation de la valeur par défaut",
+				);
+			}
+		}
+
+		// Parse cache max age
+		const cacheMaxAgeArg = args.find((arg) => arg.startsWith("--cache-max-age="));
+		if (cacheMaxAgeArg) {
+			const maxAge = Number.parseInt(cacheMaxAgeArg.split("=")[1], 10);
+			if (!Number.isNaN(maxAge) && maxAge >= 0) {
+				config.cache.maxAge = maxAge;
+				logger.info(`Durée de vie maximale du cache configurée à ${maxAge}ms`);
+			} else {
+				logger.warn(
+					"Valeur invalide pour --cache-max-age, utilisation de la valeur par défaut",
+				);
+			}
+		}
+
+		// Parse no-cache flag
+		if (args.includes("--no-cache")) {
+			// Set cache sizes to 0 to effectively disable caching
+			config.cache.wikidataMaxSize = 0;
+			config.cache.dbpediaMaxSize = 0;
+			logger.info("Cache désactivé");
 		}
 
 		// Run the CTA algorithm with the configured options

@@ -11,6 +11,7 @@ import { DEFAULT_WIKIDATA_SERVICE_CONFIG, WikidataServiceConfig } from "../confi
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
+import { cacheService } from "./CacheService";
 
 /**
  * Service for interacting with Wikidata
@@ -45,6 +46,21 @@ export class WikidataService {
 		try {
 			logger.debug(`Recherche dans Wikidata pour : "${query}" (${language})`);
 
+			// Generate a cache key for this search
+			const cacheKey = cacheService.generateCacheKey("wbsearchentities", { 
+				query, 
+				language, 
+				limit 
+			});
+
+			// Check if the result is in the cache
+			const cachedResult = cacheService.getFromWikidataCache(cacheKey);
+			if (cachedResult !== undefined) {
+				logger.debug(`Utilisation du cache pour la recherche de "${query}" dans Wikidata`);
+				return cachedResult;
+			}
+
+			// If not in cache, make the API call
 			const url = new URL(this.config.apiEndpoint);
 			url.searchParams.append("action", "wbsearchentities");
 			url.searchParams.append("search", query);
@@ -91,6 +107,9 @@ export class WikidataService {
 				};
 			});
 
+			// Cache the result
+			cacheService.setInWikidataCache(cacheKey, entities);
+
 			logger.debug(
 				`Trouvé ${entities.length} entités dans Wikidata pour "${query}"`,
 			);
@@ -126,6 +145,17 @@ export class WikidataService {
         }
       `;
 
+			// Generate a cache key for this query
+			const cacheKey = cacheService.generateCacheKey(query, { entityId });
+
+			// Check if the result is in the cache
+			const cachedResult = cacheService.getFromWikidataCache(cacheKey);
+			if (cachedResult !== undefined) {
+				logger.debug(`Utilisation du cache pour les types de l'entité ${entityUri}`);
+				return cachedResult;
+			}
+
+			// If not in cache, make the API call
 			const url = new URL(this.config.sparqlEndpoint);
 			url.searchParams.append("query", query);
 
@@ -161,6 +191,9 @@ export class WikidataService {
 				},
 			);
 
+			// Cache the result
+			cacheService.setInWikidataCache(cacheKey, types);
+
 			logger.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
 			return types;
 		} catch (error) {
@@ -193,6 +226,17 @@ export class WikidataService {
         }
       `;
 
+			// Generate a cache key for this query
+			const cacheKey = cacheService.generateCacheKey(query, { typeId });
+
+			// Check if the result is in the cache
+			const cachedResult = cacheService.getFromWikidataCache(cacheKey);
+			if (cachedResult !== undefined) {
+				logger.debug(`Utilisation du cache pour les types parents de ${typeUri}`);
+				return cachedResult;
+			}
+
+			// If not in cache, make the API call
 			const url = new URL(this.config.sparqlEndpoint);
 			url.searchParams.append("query", query);
 
@@ -219,6 +263,9 @@ export class WikidataService {
 			const parentTypes = data.results.bindings.map(
 				(binding: any) => binding.parentType.value,
 			);
+
+			// Cache the result
+			cacheService.setInWikidataCache(cacheKey, parentTypes);
 
 			logger.debug(
 				`Trouvé ${parentTypes.length} types parents pour ${typeUri}`,
