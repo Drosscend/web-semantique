@@ -7,7 +7,51 @@
  */
 
 import type { CTAConfig } from "./types";
-import { CacheServiceConfig, DEFAULT_CACHE_SERVICE_CONFIG } from "./services/CacheService";
+
+/**
+ * Configuration for the cache service
+ */
+export interface CacheServiceConfig {
+  /**
+   * Maximum number of entries in the Wikidata cache
+   * 
+   * Impact:
+   * - Higher values improve hit rates but increase memory usage
+   * - Lower values reduce memory usage but may decrease hit rates
+   * - Adjust based on the diversity of queries and available memory
+   */
+  wikidataMaxSize: number;
+
+  /**
+   * Maximum number of entries in the DBpedia cache
+   * 
+   * Impact:
+   * - Higher values improve hit rates but increase memory usage
+   * - Lower values reduce memory usage but may decrease hit rates
+   * - Adjust based on the diversity of queries and available memory
+   */
+  dbpediaMaxSize: number;
+
+  /**
+   * Maximum age of cache entries in milliseconds (optional)
+   * If specified, entries older than this will be automatically removed
+   * 
+   * Impact:
+   * - Setting this ensures data freshness but reduces cache effectiveness
+   * - Not setting this (undefined) means entries only expire via LRU eviction
+   * - Useful for data that changes periodically
+   */
+  maxAge?: number;
+}
+
+/**
+ * Default configuration for the cache service
+ */
+export const DEFAULT_CACHE_SERVICE_CONFIG: CacheServiceConfig = {
+  wikidataMaxSize: 1000,
+  dbpediaMaxSize: 1000,
+  // By default, no maxAge is set, so entries only expire via LRU eviction
+};
 
 /**
  * Main application configuration
