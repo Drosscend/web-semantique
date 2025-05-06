@@ -8,7 +8,7 @@
  * 4. Preparing the data for further processing
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import type { CSVTable, CTAConfig, Cell } from "../types";
 
 /**
@@ -24,7 +24,7 @@ export async function loadCSV(
 	hasHeader = true,
 ): Promise<CSVTable> {
 	try {
-		consola.start(`Chargement du fichier CSV depuis ${filePath}`);
+		logger.start(`Chargement du fichier CSV depuis ${filePath}`);
 
 		const content = await Bun.file(filePath).text();
 		const lines = content
@@ -77,13 +77,13 @@ export async function loadCSV(
 
 		const data = (hasHeader ? lines.slice(1) : lines).map(parseCSVLine);
 
-		consola.success(
+		logger.success(
 			`Fichier CSV chargé avec succès : ${headers.length} colonnes et ${data.length} lignes`,
 		);
 
 		return { headers, data };
 	} catch (error) {
-		consola.error(
+		logger.error(
 			`Échec du chargement du fichier CSV : ${error instanceof Error ? error.message : String(error)}`,
 		);
 		throw error;
@@ -97,13 +97,13 @@ export async function loadCSV(
  * @returns A new cleaned CSV table
  */
 export function cleanCSVData(table: CSVTable): CSVTable {
-	consola.start("Nettoyage des données CSV");
+	logger.start("Nettoyage des données CSV");
 
 	const cleanedData = table.data.map((row) =>
 		row.map((cell) => cleanCellValue(cell)),
 	);
 
-	consola.success("Nettoyage des données CSV terminé");
+	logger.success("Nettoyage des données CSV terminé");
 
 	return {
 		headers: table.headers,
@@ -145,7 +145,7 @@ export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 	const sampleSize = config?.sampleSize || table.data.length;
 	const actualSampleSize = Math.min(sampleSize, table.data.length);
 
-	consola.info(
+	logger.info(
 		`Extraction des cellules avec un échantillon de : ${actualSampleSize} lignes`,
 	);
 
@@ -179,7 +179,7 @@ export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 		}
 	}
 
-	consola.success(
+	logger.success(
 		`Cellules extraites de ${actualSampleSize} lignes à travers ${table.headers.length} colonnes`,
 	);
 

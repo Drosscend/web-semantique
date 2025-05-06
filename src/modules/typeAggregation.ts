@@ -8,7 +8,7 @@
  * 4. Producing the final result of annotation
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import type {
 	ColumnRelation,
 	ColumnTypeAnnotation,
@@ -43,7 +43,7 @@ export class TypeAggregationService {
 	 */
 	constructor(config: Partial<TypeAggregationConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug(
+		logger.debug(
 			"Service d'agrégation de types initialisé avec la configuration :",
 			this.config,
 		);
@@ -61,7 +61,7 @@ export class TypeAggregationService {
 		columnHeaders: string[],
 		columnRelations: ColumnRelation[] = [],
 	): ColumnTypeAnnotation[] {
-		consola.start(`Agrégation des types pour ${columnTypes.length} colonnes`);
+		logger.start(`Agrégation des types pour ${columnTypes.length} colonnes`);
 
 		const annotations: ColumnTypeAnnotation[] = [];
 
@@ -73,7 +73,7 @@ export class TypeAggregationService {
 
 			// Skip empty columns
 			if (typeCandidates.length === 0) {
-				consola.warn(
+				logger.warn(
 					`Aucun candidat de type pour la colonne ${header}, ignorée`,
 				);
 				continue;
@@ -109,7 +109,7 @@ export class TypeAggregationService {
 
 			annotations.push(annotation);
 
-			consola.success(
+			logger.success(
 				`Colonne "${header}" annotée comme "${bestType.type.label}" avec une confiance de ${bestType.confidence.toFixed(2)}`,
 			);
 		}
@@ -139,7 +139,7 @@ export class TypeAggregationService {
 
 		if (relevantRelations.length === 0) return;
 
-		consola.debug(
+		logger.debug(
 			`Application des améliorations de relation pour la colonne ${columnIndex} basées sur ${relevantRelations.length} relations`,
 		);
 
@@ -180,7 +180,7 @@ export class TypeAggregationService {
 					const boost = this.config.relationBoostFactor * relation.confidence;
 					candidate.confidence = Math.min(1.0, candidate.confidence + boost);
 
-					consola.debug(
+					logger.debug(
 						`Confiance améliorée pour le type "${candidate.type.label}" de ${boost.toFixed(2)} basée sur la relation avec la colonne ${otherColumnIndex}`,
 					);
 				}

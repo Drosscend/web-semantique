@@ -6,7 +6,7 @@
  * 2. calculateStringSimilarity - For calculating similarity between strings
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 
 /**
  * Configuration for query retries
@@ -42,13 +42,13 @@ export async function queryWithRetries(
 			]);
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error));
-			consola.warn(
+			logger.warn(
 				`Tentative de requête ${attempt} échouée : ${lastError.message}`,
 			);
 
 			if (attempt < config.maxRetries) {
 				const delay = config.retryDelay * attempt;
-				consola.debug(`Nouvelle tentative dans ${delay}ms...`);
+				logger.debug(`Nouvelle tentative dans ${delay}ms...`);
 				await new Promise((resolve) => setTimeout(resolve, delay));
 			}
 		}

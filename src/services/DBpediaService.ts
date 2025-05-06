@@ -7,7 +7,7 @@
  * 3. Querying for entity types
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
 
@@ -45,7 +45,7 @@ export class DBpediaService {
 	 */
 	constructor(config: Partial<DBpediaServiceConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug(
+		logger.debug(
 			"Service DBpedia initialisé avec la configuration :",
 			this.config,
 		);
@@ -59,7 +59,7 @@ export class DBpediaService {
 	 */
 	async searchEntities(query: string, limit = 5): Promise<Entity[]> {
 		try {
-			consola.debug(`Recherche dans DBpedia pour : "${query}"`);
+			logger.debug(`Recherche dans DBpedia pour : "${query}"`);
 
 			const url = new URL(this.config.lookupEndpoint);
 			url.searchParams.append("query", query);
@@ -109,12 +109,12 @@ export class DBpediaService {
 				};
 			});
 
-			consola.debug(
+			logger.debug(
 				`Trouvé ${entities.length} entités dans DBpedia pour "${query}"`,
 			);
 			return entities;
 		} catch (error) {
-			consola.error(
+			logger.error(
 				`Erreur lors de la recherche dans DBpedia : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
@@ -128,7 +128,7 @@ export class DBpediaService {
 	 */
 	async getEntityTypes(entityUri: string): Promise<SemanticType[]> {
 		try {
-			consola.debug(`Récupération des types pour l'entité : ${entityUri}`);
+			logger.debug(`Récupération des types pour l'entité : ${entityUri}`);
 
 			const query = `
         SELECT DISTINCT ?type ?label WHERE {
@@ -173,10 +173,10 @@ export class DBpediaService {
 				},
 			);
 
-			consola.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
+			logger.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
 			return types;
 		} catch (error) {
-			consola.error(
+			logger.error(
 				`Erreur lors de la récupération des types d'entité depuis DBpedia : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
@@ -190,7 +190,7 @@ export class DBpediaService {
 	 */
 	async getParentTypes(typeUri: string): Promise<string[]> {
 		try {
-			consola.debug(`Récupération des types parents pour : ${typeUri}`);
+			logger.debug(`Récupération des types parents pour : ${typeUri}`);
 
 			const query = `
         SELECT DISTINCT ?parentType WHERE {
@@ -226,12 +226,12 @@ export class DBpediaService {
 				(binding: any) => binding.parentType.value,
 			);
 
-			consola.debug(
+			logger.debug(
 				`Trouvé ${parentTypes.length} types parents pour ${typeUri}`,
 			);
 			return parentTypes;
 		} catch (error) {
-			consola.error(
+			logger.error(
 				`Erreur lors de la récupération des types parents depuis DBpedia : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];

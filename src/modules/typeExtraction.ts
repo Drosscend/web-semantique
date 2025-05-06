@@ -7,7 +7,7 @@
  * 3. Compiling the types with confidence scores
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type { EntityCandidate, SemanticType, TypeCandidate } from "../types";
@@ -49,7 +49,7 @@ export class TypeExtractionService {
 		this.wikidataService = new WikidataService();
 		this.typeMappingService = new TypeMappingService();
 
-		consola.debug(
+		logger.debug(
 			"Service d'extraction de types initialisé avec la configuration :",
 			this.config,
 		);
@@ -63,7 +63,7 @@ export class TypeExtractionService {
 	async extractColumnTypes(
 		candidates: EntityCandidate[],
 	): Promise<TypeCandidate[]> {
-		consola.start(
+		logger.start(
 			`Extraction des types à partir de ${candidates.length} candidats d'entité`,
 		);
 
@@ -113,7 +113,7 @@ export class TypeExtractionService {
 			.filter((type) => type.confidence >= this.config.minTypeConfidence)
 			.slice(0, this.config.maxTypesPerColumn);
 
-		consola.success(
+		logger.success(
 			`${filteredTypes.length} candidats de type extraits pour la colonne`,
 		);
 		return filteredTypes;
@@ -149,7 +149,7 @@ export class TypeExtractionService {
 					types.push(...fetchedTypes);
 				}
 			} catch (error) {
-				consola.error(
+				logger.error(
 					`Erreur lors de la récupération des types pour ${candidate.entity.uri} : ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
@@ -249,7 +249,7 @@ export class TypeExtractionService {
 				});
 			}
 		} catch (error) {
-			consola.error(
+			logger.error(
 				`Erreur lors de la récupération des types parents pour ${type.uri} : ${error instanceof Error ? error.message : String(error)}`,
 			);
 		}

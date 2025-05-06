@@ -15,7 +15,7 @@
 
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { consola } from "consola";
+import { logger } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
 
 import { analyzeColumnRelationships } from "./modules/columnRelationship";
@@ -55,29 +55,27 @@ export async function runCTA(
 	const mergedConfig: CTAConfig = { ...DEFAULT_CONFIG, ...config };
 
 	try {
-		consola.start(
+		logger.start(
 			`Démarrage de l'annotation de type de colonne pour ${csvFilePath}`,
 		);
-		consola.info("Configuration :", mergedConfig);
+		logger.info("Configuration :", mergedConfig);
 
 		// Step 1: Load and prepare the CSV data
-		consola.info("Étape 1 : Chargement et préparation des données CSV");
+		logger.info("Étape 1 : Chargement et préparation des données CSV");
 		const csvTable = await loadCSV(csvFilePath);
 		const cleanedTable = cleanCSVData(csvTable);
 		const columnCells = extractCells(cleanedTable, mergedConfig);
 
 		// Step 2: Correct the data
-		consola.info("Étape 2 : Correction des données");
+		logger.info("Étape 2 : Correction des données");
 		const correctedCells = correctCells(columnCells);
 
 		// Step 3: Search for entities
-		consola.info("Étape 3 : Recherche d'entités");
+		logger.info("Étape 3 : Recherche d'entités");
 		const entityCandidates = await searchEntities(correctedCells, mergedConfig);
 
 		// Step 4: Map between DBpedia and Wikidata types
-		consola.info(
-			"Étape 4 : Correspondance entre les types DBpedia et Wikidata",
-		);
+		logger.info("Étape 4 : Correspondance entre les types DBpedia et Wikidata");
 		const typeMappingService = createTypeMappingService();
 		const enhancedCandidates = entityCandidates.map((columnCandidates) =>
 			columnCandidates.map(
@@ -88,10 +86,10 @@ export async function runCTA(
 		// Step 5: Analyze column relationships (if enabled)
 		let columnRelations: ColumnRelation[] = [];
 		if (mergedConfig.useColumnRelations) {
-			consola.info("Étape 5 : Analyse des relations entre colonnes");
+			logger.info("Étape 5 : Analyse des relations entre colonnes");
 			columnRelations = analyzeColumnRelationships(enhancedCandidates);
 		} else {
-			consola.info(
+			logger.info(
 				"Étape 5 : Analyse des relations entre colonnes ignorée (désactivée dans la configuration)",
 			);
 		}
@@ -99,20 +97,20 @@ export async function runCTA(
 		// Step 6: Analyze URIs (if enabled)
 		let uriEnhancedCandidates = enhancedCandidates;
 		if (mergedConfig.useURIAnalysis) {
-			consola.info("Étape 6 : Analyse des URI");
+			logger.info("Étape 6 : Analyse des URI");
 			uriEnhancedCandidates = analyzeURIs(enhancedCandidates);
 		} else {
-			consola.info(
+			logger.info(
 				"Étape 6 : Analyse des URI ignorée (désactivée dans la configuration)",
 			);
 		}
 
 		// Step 7: Extract types
-		consola.info("Étape 7 : Extraction des types");
+		logger.info("Étape 7 : Extraction des types");
 		const columnTypes = await extractTypesForAllColumns(uriEnhancedCandidates);
 
 		// Step 8: Aggregate and vote on the final types
-		consola.info("Étape 8 : Agrégation et vote sur les types finaux");
+		logger.info("Étape 8 : Agrégation et vote sur les types finaux");
 		const annotations = aggregateColumnTypes(
 			columnTypes,
 			cleanedTable.headers,
@@ -120,13 +118,13 @@ export async function runCTA(
 		);
 
 		const duration = (Date.now() - startTime) / 1000;
-		consola.success(
+		logger.success(
 			`Annotation de type de colonne terminée en ${duration.toFixed(2)} secondes`,
 		);
 
 		return annotations;
 	} catch (error) {
-		consola.error(
+		logger.error(
 			`Erreur lors de l'exécution de CTA : ${error instanceof Error ? error.message : String(error)}`,
 		);
 		throw error;
@@ -158,9 +156,9 @@ export async function saveAnnotations(
 		// Save the annotations
 		await Bun.write(outputPath, JSON.stringify(annotations, null, 2));
 
-		consola.success(`Annotations enregistrées dans ${outputPath}`);
+		logger.success(`Annotations enregistrées dans ${outputPath}`);
 	} catch (error) {
-		consola.error(
+		logger.error(
 			`Erreur lors de l'enregistrement des annotations : ${error instanceof Error ? error.message : String(error)}`,
 		);
 		throw error;
@@ -176,7 +174,7 @@ async function main() {
 		const args = process.argv.slice(2);
 
 		if (args.length < 1) {
-			consola.error(
+			logger.error(
 				"Utilisation : bun run src/index.ts <chemin-fichier-csv> [chemin-sortie]",
 			);
 			process.exit(1);
@@ -201,14 +199,14 @@ async function main() {
 		await saveAnnotations(annotations, outputPath);
 
 		// Print a summary
-		consola.info("Résumé des annotations :");
+		logger.info("Résumé des annotations :");
 		for (const annotation of annotations) {
-			consola.info(
+			logger.info(
 				`Colonne "${annotation.columnHeader}" : ${annotation.assignedType.label} (${annotation.confidence.toFixed(2)})`,
 			);
 		}
 	} catch (error) {
-		consola.error(
+		logger.error(
 			`Erreur : ${error instanceof Error ? error.message : String(error)}`,
 		);
 		process.exit(1);

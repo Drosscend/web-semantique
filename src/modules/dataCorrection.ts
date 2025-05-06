@@ -7,7 +7,7 @@
  * 3. Enhancing data quality for better entity matching
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import { format, isValid, parse } from "date-fns";
 import type { Cell } from "../types";
 
@@ -445,7 +445,7 @@ export function standardizeNumberFormat(value: string): string {
  * @returns A new array of corrected cells
  */
 export function correctCells(cells: Cell[][]): Cell[][] {
-	consola.start("Correction des valeurs de cellules");
+	logger.start("Correction des valeurs de cellules");
 
 	const correctedCells = cells.map((columnCells) =>
 		columnCells.map((cell) => ({
@@ -454,7 +454,7 @@ export function correctCells(cells: Cell[][]): Cell[][] {
 		})),
 	);
 
-	consola.success("Correction des cellules terminée");
+	logger.success("Correction des cellules terminée");
 
 	return correctedCells;
 }

@@ -7,7 +7,7 @@
  * 3. Extracting additional context from URIs to improve type detection
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import type { EntityCandidate } from "../types";
 
 /**
@@ -38,7 +38,7 @@ export class URIAnalysisService {
 	 */
 	constructor(config: Partial<URIAnalysisConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug(
+		logger.debug(
 			"Service d'analyse d'URI initialisé avec la configuration :",
 			this.config,
 		);
@@ -50,7 +50,7 @@ export class URIAnalysisService {
 	 * @returns Enhanced entity candidates
 	 */
 	analyzeURIs(columnCandidates: EntityCandidate[][]): EntityCandidate[][] {
-		consola.start(`Analyse des URI pour ${columnCandidates.length} colonnes`);
+		logger.start(`Analyse des URI pour ${columnCandidates.length} colonnes`);
 
 		// Clone the candidates to avoid modifying the originals
 		const enhancedCandidates = columnCandidates.map((column) =>
@@ -98,7 +98,7 @@ export class URIAnalysisService {
 								1.0,
 								candidate.score + this.config.confidenceBoost,
 							);
-							consola.debug(
+							logger.debug(
 								`Confiance augmentée pour "${candidate.entity.label}" basée sur la correspondance URI avec "${value}"`,
 							);
 							break;
@@ -108,7 +108,7 @@ export class URIAnalysisService {
 			}
 		}
 
-		consola.success("Analyse des URI terminée");
+		logger.success("Analyse des URI terminée");
 		return enhancedCandidates;
 	}
 

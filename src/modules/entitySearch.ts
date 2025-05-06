@@ -7,7 +7,7 @@
  * 3. Finding candidate entities with confidence scores
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type { CTAConfig, Cell, Entity, EntityCandidate } from "../types";
@@ -57,7 +57,7 @@ export class EntitySearchService {
 		this.dbpediaService = dbpediaService || new DBpediaService();
 		this.wikidataService = wikidataService || new WikidataService();
 
-		consola.debug(
+		logger.debug(
 			"Service de recherche d'entités initialisé avec la configuration :",
 			this.config,
 		);
@@ -72,13 +72,13 @@ export class EntitySearchService {
 		const query = cell.value;
 
 		if (!query.trim()) {
-			consola.debug(
+			logger.debug(
 				`Cellule vide ignorée à [${cell.rowIndex}, ${cell.columnIndex}]`,
 			);
 			return [];
 		}
 
-		consola.debug(
+		logger.debug(
 			`Recherche d'entités pour la cellule : "${query}" [${cell.rowIndex}, ${cell.columnIndex}]`,
 		);
 
@@ -123,13 +123,13 @@ export class EntitySearchService {
 					});
 				}
 			} catch (error) {
-				consola.error(
+				logger.error(
 					`Erreur lors de la récupération des types pour l'entité ${entity.uri} : ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
 		}
 
-		consola.success(
+		logger.success(
 			`${candidates.length} candidats d'entité trouvés pour la cellule "${query}"`,
 		);
 		return candidates;
@@ -143,7 +143,7 @@ export class EntitySearchService {
 	async searchEntitiesForColumn(
 		columnCells: Cell[],
 	): Promise<EntityCandidate[]> {
-		consola.start(
+		logger.start(
 			`Recherche d'entités pour la colonne avec ${columnCells.length} cellules`,
 		);
 
@@ -154,7 +154,7 @@ export class EntitySearchService {
 		for (let i = 0; i < columnCells.length; i += batchSize) {
 			const batch = columnCells.slice(i, i + batchSize);
 
-			consola.debug(
+			logger.debug(
 				`Traitement du lot ${Math.floor(i / batchSize) + 1}/${Math.ceil(columnCells.length / batchSize)}`,
 			);
 
@@ -172,7 +172,7 @@ export class EntitySearchService {
 			}
 		}
 
-		consola.success(
+		logger.success(
 			`${candidates.length} candidats d'entité trouvés pour la colonne`,
 		);
 		return candidates;
@@ -188,7 +188,7 @@ export class EntitySearchService {
 		columnsCells: Cell[][],
 		config?: CTAConfig,
 	): Promise<EntityCandidate[][]> {
-		consola.start(`Recherche d'entités pour ${columnsCells.length} colonnes`);
+		logger.start(`Recherche d'entités pour ${columnsCells.length} colonnes`);
 
 		// Update configuration if provided
 		if (config?.sparqlEndpoints) {
@@ -208,7 +208,7 @@ export class EntitySearchService {
 		const columnCandidates: EntityCandidate[][] = [];
 
 		for (let i = 0; i < columnsCells.length; i++) {
-			consola.info(`Traitement de la colonne ${i + 1}/${columnsCells.length}`);
+			logger.info(`Traitement de la colonne ${i + 1}/${columnsCells.length}`);
 
 			const candidates = await this.searchEntitiesForColumn(columnsCells[i]);
 			columnCandidates.push(candidates);
@@ -219,7 +219,7 @@ export class EntitySearchService {
 			}
 		}
 
-		consola.success("Recherche d'entités terminée pour toutes les colonnes");
+		logger.success("Recherche d'entités terminée pour toutes les colonnes");
 		return columnCandidates;
 	}
 

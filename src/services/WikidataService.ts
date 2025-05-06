@@ -7,7 +7,7 @@
  * 3. Querying for entity types (P31 - instance of)
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
 
@@ -45,7 +45,7 @@ export class WikidataService {
 	 */
 	constructor(config: Partial<WikidataServiceConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug(
+		logger.debug(
 			"Service Wikidata initialisé avec la configuration :",
 			this.config,
 		);
@@ -64,7 +64,7 @@ export class WikidataService {
 		limit = 5,
 	): Promise<Entity[]> {
 		try {
-			consola.debug(`Recherche dans Wikidata pour : "${query}" (${language})`);
+			logger.debug(`Recherche dans Wikidata pour : "${query}" (${language})`);
 
 			const url = new URL(this.config.apiEndpoint);
 			url.searchParams.append("action", "wbsearchentities");
@@ -112,12 +112,12 @@ export class WikidataService {
 				};
 			});
 
-			consola.debug(
+			logger.debug(
 				`Trouvé ${entities.length} entités dans Wikidata pour "${query}"`,
 			);
 			return entities;
 		} catch (error) {
-			consola.error(
+			logger.error(
 				`Erreur lors de la recherche dans Wikidata : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
@@ -131,7 +131,7 @@ export class WikidataService {
 	 */
 	async getEntityTypes(entityUri: string): Promise<SemanticType[]> {
 		try {
-			consola.debug(`Récupération des types pour l'entité : ${entityUri}`);
+			logger.debug(`Récupération des types pour l'entité : ${entityUri}`);
 
 			// Extract the entity ID from the URI
 			const entityId = entityUri.split("/").pop() || "";
@@ -182,10 +182,10 @@ export class WikidataService {
 				},
 			);
 
-			consola.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
+			logger.debug(`Trouvé ${types.length} types pour l'entité ${entityUri}`);
 			return types;
 		} catch (error) {
-			consola.error(
+			logger.error(
 				`Erreur lors de la récupération des types d'entité depuis Wikidata : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];
@@ -199,7 +199,7 @@ export class WikidataService {
 	 */
 	async getParentTypes(typeUri: string): Promise<string[]> {
 		try {
-			consola.debug(`Récupération des types parents pour : ${typeUri}`);
+			logger.debug(`Récupération des types parents pour : ${typeUri}`);
 
 			// Extract the entity ID from the URI
 			const typeId = typeUri.split("/").pop() || "";
@@ -241,12 +241,12 @@ export class WikidataService {
 				(binding: any) => binding.parentType.value,
 			);
 
-			consola.debug(
+			logger.debug(
 				`Trouvé ${parentTypes.length} types parents pour ${typeUri}`,
 			);
 			return parentTypes;
 		} catch (error) {
-			consola.error(
+			logger.error(
 				`Erreur lors de la récupération des types parents depuis Wikidata : ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return [];

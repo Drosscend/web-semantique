@@ -7,7 +7,7 @@
  * 3. Leveraging the context provided by other columns to improve type detection
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import type { ColumnRelation, EntityCandidate, SemanticType } from "../types";
 
 /**
@@ -401,7 +401,7 @@ export class ColumnRelationshipService {
 	 */
 	constructor(config: Partial<ColumnRelationshipConfig> = {}) {
 		this.config = { ...DEFAULT_CONFIG, ...config };
-		consola.debug(
+		logger.debug(
 			"Column relationship service initialized with config:",
 			this.config,
 		);
@@ -415,7 +415,7 @@ export class ColumnRelationshipService {
 	analyzeColumnRelationships(
 		columnCandidates: EntityCandidate[][],
 	): ColumnRelation[] {
-		consola.start(
+		logger.start(
 			`Analyzing relationships between ${columnCandidates.length} columns`,
 		);
 
@@ -460,7 +460,7 @@ export class ColumnRelationshipService {
 		// Limit the number of relations per column
 		const filteredRelations = this.filterTopRelations(relations);
 
-		consola.success(
+		logger.success(
 			`Found ${filteredRelations.length} significant column relationships`,
 		);
 		return filteredRelations;

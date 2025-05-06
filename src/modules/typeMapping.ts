@@ -7,7 +7,7 @@
  * 3. Providing a unified view of types across knowledge bases
  */
 
-import { consola } from "consola";
+import { logger } from "../logger";
 import type { EntityCandidate, TypeMapping } from "../types";
 
 /**
@@ -319,7 +319,7 @@ export class TypeMappingService {
 		// Initialize with known mappings
 		this.initializeKnownMappings();
 
-		consola.debug("Service de correspondance de types initialisé");
+		logger.debug("Service de correspondance de types initialisé");
 	}
 
 	/**
@@ -330,7 +330,7 @@ export class TypeMappingService {
 			this.addMapping(mapping);
 		}
 
-		consola.debug(
+		logger.debug(
 			`Initialisé avec ${KNOWN_TYPE_MAPPINGS.length} correspondances de types connues`,
 		);
 	}
@@ -378,7 +378,7 @@ export class TypeMappingService {
 	 * @returns The enhanced entity candidates
 	 */
 	enhanceCandidates(candidates: EntityCandidate[]): EntityCandidate[] {
-		consola.start(
+		logger.start(
 			"Amélioration des candidats d'entité avec les correspondances de types",
 		);
 
@@ -412,7 +412,7 @@ export class TypeMappingService {
 			return enhancedCandidate;
 		});
 
-		consola.success(`${candidates.length} candidats d'entité améliorés`);
+		logger.success(`${candidates.length} candidats d'entité améliorés`);
 		return enhancedCandidates;
 	}
 }
