@@ -7,15 +7,7 @@
  */
 
 import { logger } from "../logger";
-
-/**
- * Configuration for query retries
- */
-export interface RetryConfig {
-	maxRetries: number;
-	retryDelay: number;
-	timeout: number;
-}
+import { RetryConfig } from "../config";
 
 /**
  * Executes a query with retries

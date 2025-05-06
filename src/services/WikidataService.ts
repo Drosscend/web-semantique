@@ -7,31 +7,10 @@
  * 3. Querying for entity types (P31 - instance of)
  */
 
+import { DEFAULT_WIKIDATA_SERVICE_CONFIG, WikidataServiceConfig } from "../config";
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
-
-/**
- * Configuration for the Wikidata service
- */
-interface WikidataServiceConfig {
-	apiEndpoint: string;
-	sparqlEndpoint: string;
-	maxRetries: number;
-	retryDelay: number;
-	timeout: number;
-}
-
-/**
- * Default configuration for the Wikidata service
- */
-const DEFAULT_CONFIG: WikidataServiceConfig = {
-	apiEndpoint: "https://www.wikidata.org/w/api.php",
-	sparqlEndpoint: "https://query.wikidata.org/sparql",
-	maxRetries: 3,
-	retryDelay: 1000,
-	timeout: 10000,
-};
 
 /**
  * Service for interacting with Wikidata
@@ -44,7 +23,7 @@ export class WikidataService {
 	 * @param config Optional configuration
 	 */
 	constructor(config: Partial<WikidataServiceConfig> = {}) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
+		this.config = { ...DEFAULT_WIKIDATA_SERVICE_CONFIG, ...config };
 		logger.debug(
 			"Service Wikidata initialisé avec la configuration :",
 			this.config,

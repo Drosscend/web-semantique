@@ -350,15 +350,166 @@ export const DEFAULT_URI_ANALYSIS_CONFIG: URIAnalysisConfig = {
 	 */
 	confidenceBoost: 0.2,
 
-	/**
-	 * Minimum length of a string to consider for matching in URIs
-	 *
-	 * Impact:
-	 * - Higher values reduce false positives by requiring longer matches
-	 * - Lower values increase sensitivity but may introduce spurious matches
-	 * - Values below 3 may match many common short strings, creating noise
-	 * - Values above 5 may miss valid matches for short entity names
-	 * - Adjust based on the typical length of entity names in your dataset
-	 */
-	minMatchLength: 3,
-};
+ /**
+  * Minimum length of a string to consider for matching in URIs
+  *
+  * Impact:
+  * - Higher values reduce false positives by requiring longer matches
+  * - Lower values increase sensitivity but may introduce spurious matches
+  * - Values below 3 may match many common short strings, creating noise
+  * - Values above 5 may miss valid matches for short entity names
+  * - Adjust based on the typical length of entity names in your dataset
+  */
+ minMatchLength: 3,
+ };
+
+ /**
+  * Configuration for service retry logic
+  *
+  * These settings control how API requests are retried when they fail.
+  * Proper retry configuration can improve reliability when working with external services.
+  */
+ export interface RetryConfig {
+ 	/**
+ 	 * Maximum number of retry attempts
+ 	 */
+ 	maxRetries: number;
+
+ 	/**
+ 	 * Delay between retry attempts (in milliseconds)
+ 	 */
+ 	retryDelay: number;
+
+ 	/**
+ 	 * Timeout for each request (in milliseconds)
+ 	 */
+ 	timeout: number;
+ }
+
+ /**
+  * Default configuration for service retry logic
+  */
+ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
+ 	/**
+ 	 * Maximum number of retry attempts
+ 	 *
+ 	 * Impact:
+ 	 * - Higher values increase the chance of successful requests but may delay error reporting
+ 	 * - Lower values fail faster but may miss successful requests after temporary issues
+ 	 * - Values above 5 rarely improve success rates significantly
+ 	 * - Values below 2 may not handle common transient network issues
+ 	 */
+ 	maxRetries: 3,
+
+ 	/**
+ 	 * Delay between retry attempts (in milliseconds)
+ 	 *
+ 	 * Impact:
+ 	 * - Higher values give services more time to recover but increase total request time
+ 	 * - Lower values retry quickly but may not allow enough recovery time
+ 	 * - Values below 500ms may overwhelm services with rapid retries
+ 	 * - Values above 2000ms significantly increase total request time
+ 	 */
+ 	retryDelay: 1000,
+
+ 	/**
+ 	 * Timeout for each request (in milliseconds)
+ 	 *
+ 	 * Impact:
+ 	 * - Higher values allow more time for slow responses but increase waiting time for failures
+ 	 * - Lower values fail quickly for slow services but may miss valid responses
+ 	 * - Values below 5000ms may be too aggressive for complex queries
+ 	 * - Values above 15000ms significantly delay error reporting
+ 	 */
+ 	timeout: 10000,
+ };
+
+ /**
+  * Configuration for the Wikidata service
+  *
+  * These settings control how the application interacts with Wikidata.
+  * Wikidata provides structured data that can be queried via SPARQL and API endpoints.
+  */
+ export interface WikidataServiceConfig extends RetryConfig {
+ 	/**
+ 	 * Wikidata API endpoint
+ 	 */
+ 	apiEndpoint: string;
+
+ 	/**
+ 	 * Wikidata SPARQL endpoint
+ 	 */
+ 	sparqlEndpoint: string;
+ }
+
+ /**
+  * Default configuration for the Wikidata service
+  */
+ export const DEFAULT_WIKIDATA_SERVICE_CONFIG: WikidataServiceConfig = {
+ 	/**
+ 	 * Wikidata API endpoint
+ 	 *
+ 	 * Impact:
+ 	 * - Changing this may be necessary if the official endpoint is unavailable
+ 	 * - Alternative endpoints may have different rate limits or capabilities
+ 	 * - Using a mirror can improve performance in some geographic regions
+ 	 */
+ 	apiEndpoint: "https://www.wikidata.org/w/api.php",
+
+ 	/**
+ 	 * Wikidata SPARQL endpoint
+ 	 *
+ 	 * Impact:
+ 	 * - Changing this may be necessary if the official endpoint is unavailable
+ 	 * - Alternative endpoints may have different query capabilities or performance
+ 	 * - This should match the endpoint in sparqlEndpoints.wikidata for consistency
+ 	 */
+ 	sparqlEndpoint: "https://query.wikidata.org/sparql",
+
+ 	...DEFAULT_RETRY_CONFIG,
+ };
+
+ /**
+  * Configuration for the DBpedia service
+  *
+  * These settings control how the application interacts with DBpedia.
+  * DBpedia provides structured data extracted from Wikipedia that can be queried.
+  */
+ export interface DBpediaServiceConfig extends RetryConfig {
+ 	/**
+ 	 * DBpedia lookup endpoint for entity search
+ 	 */
+ 	lookupEndpoint: string;
+
+ 	/**
+ 	 * DBpedia SPARQL endpoint
+ 	 */
+ 	sparqlEndpoint: string;
+ }
+
+ /**
+  * Default configuration for the DBpedia service
+  */
+ export const DEFAULT_DBPEDIA_SERVICE_CONFIG: DBpediaServiceConfig = {
+ 	/**
+ 	 * DBpedia lookup endpoint for entity search
+ 	 *
+ 	 * Impact:
+ 	 * - Changing this may be necessary if the official endpoint is unavailable
+ 	 * - Alternative endpoints may have different rate limits or capabilities
+ 	 * - Using a mirror can improve performance in some geographic regions
+ 	 */
+ 	lookupEndpoint: "https://lookup.dbpedia.org/api/search",
+
+ 	/**
+ 	 * DBpedia SPARQL endpoint
+ 	 *
+ 	 * Impact:
+ 	 * - Changing this may be necessary if the official endpoint is unavailable
+ 	 * - Alternative endpoints may have different query capabilities or performance
+ 	 * - This should match the endpoint in sparqlEndpoints.dbpedia for consistency
+ 	 */
+ 	sparqlEndpoint: "https://dbpedia.org/sparql",
+
+ 	...DEFAULT_RETRY_CONFIG,
+ };

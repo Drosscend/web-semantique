@@ -7,31 +7,10 @@
  * 3. Querying for entity types
  */
 
+import { DBpediaServiceConfig, DEFAULT_DBPEDIA_SERVICE_CONFIG } from "../config";
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
-
-/**
- * Configuration for the DBpedia service
- */
-interface DBpediaServiceConfig {
-	lookupEndpoint: string;
-	sparqlEndpoint: string;
-	maxRetries: number;
-	retryDelay: number;
-	timeout: number;
-}
-
-/**
- * Default configuration for the DBpedia service
- */
-const DEFAULT_CONFIG: DBpediaServiceConfig = {
-	lookupEndpoint: "https://lookup.dbpedia.org/api/search",
-	sparqlEndpoint: "https://dbpedia.org/sparql",
-	maxRetries: 3,
-	retryDelay: 1000,
-	timeout: 10000,
-};
 
 /**
  * Service for interacting with DBpedia
@@ -44,7 +23,7 @@ export class DBpediaService {
 	 * @param config Optional configuration
 	 */
 	constructor(config: Partial<DBpediaServiceConfig> = {}) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
+		this.config = { ...DEFAULT_DBPEDIA_SERVICE_CONFIG, ...config };
 		logger.debug(
 			"Service DBpedia initialisé avec la configuration :",
 			this.config,
