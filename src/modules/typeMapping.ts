@@ -8,7 +8,7 @@
  */
 
 import { logger } from "../logger";
-import type { EntityCandidate, TypeMapping } from "../types";
+import type { EntityCandidate, SemanticType, TypeMapping } from "../types";
 
 /**
  * Known mappings between DBpedia and Wikidata types
@@ -310,66 +310,16 @@ const KNOWN_TYPE_MAPPINGS: TypeMapping[] = [
  * Service for mapping between DBpedia and Wikidata types
  */
 export class TypeMappingService {
-	private mappings: Map<string, TypeMapping[]> = new Map();
-
-	/**
-	 * Creates a new type mapping service
-	 */
-	constructor() {
-		// Initialize with known mappings
-		this.initializeKnownMappings();
-
-		logger.debug("Service de correspondance de types initialisé");
-	}
-
-	/**
-	 * Initializes the service with known type mappings
-	 */
-	private initializeKnownMappings(): void {
-		for (const mapping of KNOWN_TYPE_MAPPINGS) {
-			this.addMapping(mapping);
-		}
-
-		logger.debug(
-			`Initialisé avec ${KNOWN_TYPE_MAPPINGS.length} correspondances de types connues`,
-		);
-	}
-
-	/**
-	 * Adds a mapping to the internal mapping store
-	 * @param mapping The mapping to add
-	 */
-	private addMapping(mapping: TypeMapping): void {
-		// Add mapping from DBpedia to Wikidata
-		if (!this.mappings.has(mapping.dbpediaType)) {
-			this.mappings.set(mapping.dbpediaType, []);
-		}
-		const dbpediaMappings = this.mappings.get(mapping.dbpediaType);
-		if (dbpediaMappings) {
-			dbpediaMappings.push(mapping);
-		}
-
-		// Add reverse mapping from Wikidata to DBpedia
-		if (!this.mappings.has(mapping.wikidataType)) {
-			this.mappings.set(mapping.wikidataType, []);
-		}
-		const wikidataMappings = this.mappings.get(mapping.wikidataType);
-		if (wikidataMappings) {
-			wikidataMappings.push({
-				dbpediaType: mapping.dbpediaType,
-				wikidataType: mapping.wikidataType,
-				confidence: mapping.confidence,
-			});
-		}
-	}
-
 	/**
 	 * Gets equivalent types for a given type
 	 * @param typeUri The URI of the type
 	 * @returns An array of equivalent type mappings
 	 */
-	getEquivalentTypes(typeUri: string): TypeMapping[] {
-		return this.mappings.get(typeUri) || [];
+	private getEquivalentTypes(typeUri: string): TypeMapping[] {
+		return KNOWN_TYPE_MAPPINGS.filter(
+			(mapping) =>
+				mapping.dbpediaType === typeUri || mapping.wikidataType === typeUri,
+		);
 	}
 
 	/**
@@ -383,27 +333,32 @@ export class TypeMappingService {
 		);
 
 		const enhancedCandidates = candidates.map((candidate) => {
-			// Clone the candidate to avoid modifying the original
 			const enhancedCandidate = { ...candidate };
-
-			// Adjust score based on type mappings
 			let scoreAdjustment = 0;
+
+			const typeUriMap = new Map<string, SemanticType>();
+			for (const type of candidate.types) {
+				typeUriMap.set(type.uri, type);
+			}
 
 			for (const type of candidate.types) {
 				const equivalentTypes = this.getEquivalentTypes(type.uri);
 
-				if (equivalentTypes.length > 0) {
-					// If this type has equivalents in the other knowledge base,
-					// increase the score based on the mapping confidence
-					const maxMappingConfidence = Math.max(
-						...equivalentTypes.map((mapping) => mapping.confidence),
-					);
+				for (const mapping of equivalentTypes) {
+					const otherTypeUri =
+						type.source === "DBpedia"
+							? mapping.wikidataType
+							: mapping.dbpediaType;
 
-					scoreAdjustment += maxMappingConfidence * 0.1;
+					if (typeUriMap.has(otherTypeUri)) {
+						scoreAdjustment += mapping.confidence * 0.1;
+						logger.debug(
+							`Type correspondant trouvé: ${type.uri} <-> ${otherTypeUri} (confiance: ${mapping.confidence})`,
+						);
+					}
 				}
 			}
 
-			// Apply score adjustment (capped at 0.3)
 			enhancedCandidate.score = Math.min(
 				1.0,
 				candidate.score + Math.min(0.3, scoreAdjustment),
