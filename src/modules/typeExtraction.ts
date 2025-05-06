@@ -7,7 +7,10 @@
  * 3. Compiling the types with confidence scores
  */
 
-import { DEFAULT_TYPE_EXTRACTION_CONFIG, TypeExtractionConfig } from "../config";
+import {
+	DEFAULT_TYPE_EXTRACTION_CONFIG,
+	type TypeExtractionConfig,
+} from "../config";
 import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
@@ -245,7 +248,6 @@ export class TypeExtractionService {
 	 */
 	private isTooGeneral(type: SemanticType): boolean {
 		// List of URIs for types that are too general
-		// TODO: This list should be configurable or fetched from a service
 		const tooGeneralTypes = [
 			"http://www.w3.org/2002/07/owl#Thing",
 			"http://schema.org/Thing",
