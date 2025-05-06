@@ -14,7 +14,7 @@
  */
 
 import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, basename } from "node:path";
 import { DEFAULT_CTA_CONFIG } from "./config";
 import { logger } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
@@ -153,6 +153,49 @@ export async function saveAnnotations(
 }
 
 /**
+ * Saves the column type annotations to a CSV file in the format: filename,column,uri
+ * @param annotations The annotations to save
+ * @param csvFilePath The original CSV file path
+ */
+export async function saveAnnotationsToCSV(
+	annotations: ColumnTypeAnnotation[],
+	csvFilePath: string,
+): Promise<void> {
+	try {
+		const outputDir = join(process.cwd(), "output");
+		const outputPath = join(outputDir, "cta_ft.csv");
+
+		// Get filename without extension
+		const fileNameWithExt = basename(csvFilePath);
+		const fileName = fileNameWithExt.replace(/\.[^/.]+$/, "");
+
+		// Create output directory if it doesn't exist
+		try {
+			await mkdir(outputDir, { recursive: true });
+		} catch (error) {
+			// Ignore if directory already exists
+		}
+
+		// Create CSV content
+		let csvContent = "";
+
+		for (const annotation of annotations) {
+			csvContent += `${fileName},${annotation.columnIndex},${annotation.assignedType.uri}\n`;
+		}
+
+		// Save the CSV file
+		await Bun.write(outputPath, csvContent);
+
+		logger.success(`Annotations CSV enregistrées dans ${outputPath}`);
+	} catch (error) {
+		logger.error(
+			`Erreur lors de l'enregistrement des annotations CSV : ${error instanceof Error ? error.message : String(error)}`,
+		);
+		throw error;
+	}
+}
+
+/**
  * Displays help information about how to use the CTA algorithm
  */
 function displayHelp() {
@@ -167,6 +210,8 @@ UTILISATION:
 DESCRIPTION:
   Cet outil analyse un fichier CSV et détermine automatiquement le type sémantique
   de chaque colonne en utilisant les bases de connaissances Wikidata et DBpedia.
+  Les résultats sont enregistrés à la fois au format JSON et dans un fichier CSV
+  nommé "cta_ft.csv" dans le répertoire "output" au format: nom_fichier_sans_extension,colonne,uri.
 
 ARGUMENTS:
   <chemin-fichier-csv>    Chemin vers le fichier CSV à analyser
@@ -293,8 +338,11 @@ async function main() {
 		// Run the CTA algorithm with the configured options
 		const annotations = await runCTA(csvFilePath, config);
 
-		// Save the annotations
+		// Save the annotations to JSON
 		await saveAnnotations(annotations, outputPath);
+
+		// Save the annotations to CSV
+		await saveAnnotationsToCSV(annotations, csvFilePath);
 
 		// Print a summary
 		logger.info("Résumé des annotations :");

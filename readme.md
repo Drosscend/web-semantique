@@ -97,7 +97,13 @@ Exemple de base :
 bun run src\index.ts data\test.csv
 ```
 
-Cette commande analysera le fichier CSV et enregistrera les annotations dans un fichier JSON dans le répertoire `output`. Par défaut, le fichier de sortie sera nommé d'après le fichier d'entrée (par exemple, `test_annotations.json` pour `test.csv`). Le processus comprend toutes les étapes décrites dans la vue d'ensemble, depuis le chargement des données jusqu'à l'annotation finale des types de colonnes.
+Cette commande analysera le fichier CSV et enregistrera les annotations dans deux formats :
+
+1. Un fichier JSON dans le répertoire `output`. Par défaut, le fichier de sortie sera nommé d'après le fichier d'entrée (par exemple, `test_annotations.json` pour `test.csv`). Ce fichier contient les annotations détaillées avec les types assignés, les scores de confiance, et les types alternatifs.
+
+2. Un fichier CSV nommé `cta_ft.csv` dans le répertoire `output`. Ce fichier contient les annotations au format simplifié : `nom_fichier_sans_extension,colonne,uri`. Par exemple : `test,0,http://www.wikidata.org/entity/Q6256`.
+
+Le processus comprend toutes les étapes décrites dans la vue d'ensemble, depuis le chargement des données jusqu'à l'annotation finale des types de colonnes.
 
 Vous pouvez également spécifier un chemin de sortie personnalisé :
 ```bash
