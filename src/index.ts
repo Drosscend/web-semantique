@@ -166,6 +166,47 @@ export async function saveAnnotations(
 }
 
 /**
+ * Displays help information about how to use the CTA algorithm
+ */
+function displayHelp() {
+	console.log(`
+Annotation de Type de Colonne CSV vers RDF (CTA)
+===============================================
+
+UTILISATION:
+  bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie]
+  bun run src\\index.ts --help
+
+DESCRIPTION:
+  Cet outil analyse un fichier CSV et détermine automatiquement le type sémantique
+  de chaque colonne en utilisant les bases de connaissances Wikidata et DBpedia.
+
+ARGUMENTS:
+  <chemin-fichier-csv>    Chemin vers le fichier CSV à analyser
+  [chemin-sortie]         Chemin optionnel pour le fichier de sortie JSON
+                          (par défaut: output/<nom-fichier>_annotations.json)
+
+OPTIONS:
+  --help                  Affiche ce message d'aide
+
+CONFIGURATION:
+  La configuration peut être modifiée en utilisant l'API programmatique:
+
+  - sampleSize            Nombre de lignes à échantillonner (défaut: 10)
+  - confidenceThreshold   Seuil de confiance minimum (défaut: 0.3)
+  - useColumnRelations    Utiliser l'analyse des relations (défaut: true)
+  - useURIAnalysis        Utiliser l'analyse des URI (défaut: true)
+  - sparqlEndpoints       Points d'accès SPARQL personnalisés
+
+EXEMPLES:
+  bun run src\\index.ts data\\test.csv
+  bun run src\\index.ts data\\test.csv output\\mes_annotations.json
+
+Pour plus d'informations, consultez le README.md
+`);
+}
+
+/**
  * Main function to run the CTA algorithm from the command line
  */
 async function main() {
@@ -173,10 +214,17 @@ async function main() {
 		// Parse command line arguments
 		const args = process.argv.slice(2);
 
+		// Check for help flag
+		if (args.includes("--help") || args.includes("-h")) {
+			displayHelp();
+			return;
+		}
+
 		if (args.length < 1) {
 			logger.error(
-				"Utilisation : bun run src/index.ts <chemin-fichier-csv> [chemin-sortie]",
+				"Utilisation : bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie]",
 			);
+			logger.info("Utilisez --help pour plus d'informations");
 			process.exit(1);
 		}
 
