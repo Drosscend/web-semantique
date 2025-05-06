@@ -135,7 +135,7 @@ L'algorithme CTA peut être configuré avec les options suivantes :
 
 | Option | Description | Valeur par défaut |
 |--------|-------------|-------------------|
-| `sampleSize` | Nombre de lignes à échantillonner pour la détection de type | 20 |
+| `sampleSize` | Nombre de lignes à échantillonner pour la détection de type | 10 |
 | `confidenceThreshold` | Seuil de confiance minimum pour l'attribution de type | 0.3 |
 | `useColumnRelations` | Utiliser les relations entre colonnes | true |
 | `useURIAnalysis` | Analyser les URI pour des informations supplémentaires | true |

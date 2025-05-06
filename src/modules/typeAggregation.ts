@@ -14,6 +14,7 @@ import type {
 	ColumnTypeAnnotation,
 	TypeCandidate,
 } from "../types";
+import { KNOWN_TYPE_RELATIONSHIPS } from "./columnRelationship";
 
 /**
  * Configuration for type aggregation
@@ -205,40 +206,23 @@ export class TypeAggregationService {
 		// If no relation type is specified, assume compatibility
 		if (!relationType) return true;
 
-		// Define known compatible type pairs for common relations
-		// TODO: This should be replaced with a more comprehensive mapping
-		const compatibleTypePairs: Record<string, Array<[string, string]>> = {
-			hasCapital: [
-				[
-					"http://dbpedia.org/ontology/Country",
-					"http://dbpedia.org/ontology/City",
-				],
-				[
-					"http://www.wikidata.org/entity/Q6256",
-					"http://www.wikidata.org/entity/Q5119",
-				],
-			],
-			hasCity: [
-				[
-					"http://dbpedia.org/ontology/Country",
-					"http://dbpedia.org/ontology/City",
-				],
-				[
-					"http://www.wikidata.org/entity/Q6256",
-					"http://www.wikidata.org/entity/Q515",
-				],
-			],
-			birthPlace: [
-				[
-					"http://dbpedia.org/ontology/Person",
-					"http://dbpedia.org/ontology/Place",
-				],
-				[
-					"http://www.wikidata.org/entity/Q215627",
-					"http://www.wikidata.org/entity/Q2221906",
-				],
-			],
-		};
+		// Generate compatible type pairs from KNOWN_TYPE_RELATIONSHIPS
+		const compatibleTypePairs: Record<
+			string,
+			Array<[string, string]>
+		> = KNOWN_TYPE_RELATIONSHIPS.reduce(
+			(acc, relation) => {
+				if (!acc[relation.relationName]) {
+					acc[relation.relationName] = [];
+				}
+				acc[relation.relationName].push([
+					relation.sourceType,
+					relation.targetType,
+				]);
+				return acc;
+			},
+			{} as Record<string, Array<[string, string]>>,
+		);
 
 		// Check if the relation type is known
 		if (!(relationType in compatibleTypePairs)) return true;
@@ -256,20 +240,6 @@ export class TypeAggregationService {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Filters annotations based on confidence threshold
-	 * @param annotations The annotations to filter
-	 * @returns Filtered annotations
-	 */
-	filterAnnotations(
-		annotations: ColumnTypeAnnotation[],
-	): ColumnTypeAnnotation[] {
-		return annotations.filter(
-			(annotation) =>
-				annotation.confidence >= this.config.minConfidenceThreshold,
-		);
 	}
 }
 

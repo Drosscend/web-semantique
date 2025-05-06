@@ -2,9 +2,11 @@
  * Entity Search Module
  *
  * This module is responsible for:
- * 1. Searching for entities corresponding to cell values in DBpedia and Wikidata
- * 2. Combining and ranking the results
- * 3. Finding candidate entities with confidence scores
+ * 1. Searching for entities corresponding to cell values in both DBpedia and Wikidata knowledge bases
+ * 2. Finding equivalent entities across knowledge bases (e.g., matching a DBpedia entity to its Wikidata counterpart)
+ * 3. Retrieving and combining semantic types from both knowledge bases for each entity
+ * 4. Ranking and filtering entity candidates based on confidence scores and relevance
+ * 5. Providing enriched entity candidates with types from multiple knowledge bases
  */
 
 import { logger } from "../logger";

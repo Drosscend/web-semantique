@@ -39,7 +39,7 @@ interface TypeRelationship {
 /**
  * Known relationships between common entity types
  */
-const KNOWN_TYPE_RELATIONSHIPS: TypeRelationship[] = [
+export const KNOWN_TYPE_RELATIONSHIPS: TypeRelationship[] = [
 	// Country - Capital relationships
 	{
 		sourceType: "http://dbpedia.org/ontology/Country",

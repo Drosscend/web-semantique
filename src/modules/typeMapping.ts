@@ -2,9 +2,10 @@
  * Type Mapping Module
  *
  * This module is responsible for:
- * 1. Creating mappings between equivalent types from DBpedia and Wikidata
- * 2. Reinforcing the score of types that appear in both sources
- * 3. Providing a unified view of types across knowledge bases
+ * 1. Defining and managing mappings between equivalent types from DBpedia and Wikidata
+ * 2. Enhancing entity candidates by identifying when an entity has equivalent types from both knowledge bases
+ * 3. Increasing confidence scores for entities that have matching types across both DBpedia and Wikidata
+ * 4. Providing a unified view of semantic types across different knowledge bases
  */
 
 import { logger } from "../logger";

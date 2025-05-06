@@ -266,9 +266,36 @@ export class TypeExtractionService {
 		const tooGeneralTypes = [
 			"http://www.w3.org/2002/07/owl#Thing",
 			"http://schema.org/Thing",
+
+			// DBpedia top-level types
 			"http://dbpedia.org/ontology/Thing",
+			"http://dbpedia.org/ontology/Agent",
+			"http://dbpedia.org/ontology/Place",
+			"http://dbpedia.org/ontology/TopicalConcept",
+			"http://dbpedia.org/ontology/Event",
+			"http://dbpedia.org/ontology/Work",
+			"http://dbpedia.org/ontology/Species",
+			"http://dbpedia.org/ontology/TimePeriod",
+			"http://dbpedia.org/ontology/MeanOfTransportation",
+			"http://dbpedia.org/ontology/PersonFunction",
+
+			// Wikidata top-level types
 			"http://www.wikidata.org/entity/Q35120", // Entity
 			"http://www.wikidata.org/entity/Q488383", // Object
+			"http://www.wikidata.org/entity/Q7184903", // Abstract object
+			"http://www.wikidata.org/entity/Q830077", // Subject
+			"http://www.wikidata.org/entity/Q35120", // Entity
+			"http://www.wikidata.org/entity/Q1190554", // Occurrence
+			"http://www.wikidata.org/entity/Q186081", // Time interval
+			"http://www.wikidata.org/entity/Q5", // Human
+			"http://www.wikidata.org/entity/Q795052", // Information entity
+			"http://www.wikidata.org/entity/Q4406616", // Structure
+			"http://www.wikidata.org/entity/Q618123", // Geographic feature
+			"http://www.wikidata.org/entity/Q2221906", // Geographic location
+			"http://www.wikidata.org/entity/Q43229", // Organization
+			"http://www.wikidata.org/entity/Q7725634", // Literary work
+			"http://www.wikidata.org/entity/Q386724", // Work
+			"http://www.wikidata.org/entity/Q1656682", // Event
 		];
 
 		return tooGeneralTypes.includes(type.uri);
