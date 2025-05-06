@@ -8,6 +8,7 @@
  * 4. Producing the final result of annotation
  */
 
+import { DEFAULT_TYPE_AGGREGATION_CONFIG, TypeAggregationConfig } from "../config";
 import { logger } from "../logger";
 import type {
 	ColumnRelation,
@@ -15,22 +16,6 @@ import type {
 	TypeCandidate,
 } from "../types";
 import { KNOWN_TYPE_RELATIONSHIPS } from "./columnRelationship";
-
-/**
- * Configuration for type aggregation
- */
-interface TypeAggregationConfig {
-	minConfidenceThreshold: number;
-	relationBoostFactor: number;
-}
-
-/**
- * Default configuration for type aggregation
- */
-const DEFAULT_CONFIG: TypeAggregationConfig = {
-	minConfidenceThreshold: 0.3,
-	relationBoostFactor: 0.2,
-};
 
 /**
  * Service for aggregating and voting on column types
@@ -43,7 +28,7 @@ export class TypeAggregationService {
 	 * @param config Optional configuration
 	 */
 	constructor(config: Partial<TypeAggregationConfig> = {}) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
+		this.config = { ...DEFAULT_TYPE_AGGREGATION_CONFIG, ...config };
 		logger.debug(
 			"Service d'agrégation de types initialisé avec la configuration :",
 			this.config,

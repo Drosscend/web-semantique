@@ -7,29 +7,12 @@
  * 3. Compiling the types with confidence scores
  */
 
+import { DEFAULT_TYPE_EXTRACTION_CONFIG, TypeExtractionConfig } from "../config";
 import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type { EntityCandidate, SemanticType, TypeCandidate } from "../types";
 import { TypeMappingService } from "./typeMapping";
-
-/**
- * Configuration for type extraction
- */
-interface TypeExtractionConfig {
-	minTypeConfidence: number;
-	maxTypesPerColumn: number;
-	useParentTypes: boolean;
-}
-
-/**
- * Default configuration for type extraction
- */
-const DEFAULT_CONFIG: TypeExtractionConfig = {
-	minTypeConfidence: 0.2,
-	maxTypesPerColumn: 5,
-	useParentTypes: true,
-};
 
 /**
  * Service for extracting and organizing types from entities
@@ -44,7 +27,7 @@ export class TypeExtractionService {
 	 * Creates a new type extraction service
 	 */
 	constructor() {
-		this.config = { ...DEFAULT_CONFIG };
+		this.config = { ...DEFAULT_TYPE_EXTRACTION_CONFIG };
 		this.dbpediaService = new DBpediaService();
 		this.wikidataService = new WikidataService();
 		this.typeMappingService = new TypeMappingService();

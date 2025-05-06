@@ -7,24 +7,9 @@
  * 3. Extracting additional context from URIs to improve type detection
  */
 
+import { DEFAULT_URI_ANALYSIS_CONFIG, URIAnalysisConfig } from "../config";
 import { logger } from "../logger";
 import type { EntityCandidate } from "../types";
-
-/**
- * Configuration for URI analysis
- */
-interface URIAnalysisConfig {
-	confidenceBoost: number;
-	minMatchLength: number;
-}
-
-/**
- * Default configuration for URI analysis
- */
-const DEFAULT_CONFIG: URIAnalysisConfig = {
-	confidenceBoost: 0.2,
-	minMatchLength: 3,
-};
 
 /**
  * Service for analyzing URIs to improve entity matching
@@ -37,7 +22,7 @@ export class URIAnalysisService {
 	 * @param config Optional configuration
 	 */
 	constructor(config: Partial<URIAnalysisConfig> = {}) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
+		this.config = { ...DEFAULT_URI_ANALYSIS_CONFIG, ...config };
 		logger.debug(
 			"Service d'analyse d'URI initialisé avec la configuration :",
 			this.config,

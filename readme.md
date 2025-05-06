@@ -89,10 +89,10 @@ L'algorithme CTA fonctionne en plusieurs étapes détaillées ci-dessous :
 Exécutez l'algorithme CTA sur un fichier CSV :
 
 ```bash
-bun run src\index.ts <chemin-du-fichier-csv> [chemin-de-sortie]
+bun run src\index.ts <chemin-du-fichier-csv> [chemin-de-sortie] [options]
 ```
 
-Exemple :
+Exemple de base :
 ```bash
 bun run src\index.ts data\test.csv
 ```
@@ -103,6 +103,37 @@ Vous pouvez également spécifier un chemin de sortie personnalisé :
 ```bash
 bun run src\index.ts data\test.csv output\mes_annotations.json
 ```
+
+### Options de ligne de commande
+
+L'algorithme CTA accepte plusieurs options pour personnaliser son comportement :
+
+```bash
+# Augmenter la taille de l'échantillon pour une meilleure précision
+bun run src\index.ts data\test.csv --sample=20
+
+# Définir un seuil de confiance plus élevé pour des annotations plus fiables
+bun run src\index.ts data\test.csv --confidence=0.5
+
+# Désactiver l'analyse des relations entre colonnes pour un traitement plus rapide
+bun run src\index.ts data\test.csv --no-relations
+
+# Désactiver l'analyse des URI
+bun run src\index.ts data\test.csv --no-uri-analysis
+
+# Combiner plusieurs options
+bun run src\index.ts data\test.csv --sample=30 --confidence=0.4 --no-uri-analysis
+```
+
+Options disponibles :
+
+| Option | Description | Valeur par défaut |
+|--------|-------------|-------------------|
+| `--sample=N` | Nombre de lignes à échantillonner pour la détection de type | 10 |
+| `--confidence=N.N` | Seuil de confiance minimum pour l'attribution de type | 0.3 |
+| `--no-relations` | Désactive l'analyse des relations entre colonnes | (activé) |
+| `--no-uri-analysis` | Désactive l'analyse des URI | (activé) |
+| `--help` | Affiche l'aide et les informations d'utilisation | - |
 
 ### Utilisation programmatique
 
@@ -118,6 +149,7 @@ async function main() {
     confidenceThreshold: 0.3,      // Seuil de confiance
     useColumnRelations: true,      // Utiliser l'analyse des relations entre colonnes
     useURIAnalysis: true           // Utiliser l'analyse des URI
+    // Toutes les configurations sont centralisées dans src/config.ts
   });
 
   // Enregistrement des annotations
@@ -154,28 +186,124 @@ Cette commande exécutera l'algorithme CTA sur le fichier CSV d'exemple et gén�
 
 ## Configuration
 
-L'algorithme CTA peut être configuré avec les options suivantes :
+L'algorithme CTA utilise une approche de configuration centralisée. Toutes les configurations par défaut sont regroupées dans le fichier `src/config.ts`, ce qui facilite la maintenance et la personnalisation.
 
-| Option | Description | Valeur par défaut |
-|--------|-------------|-------------------|
-| `sampleSize` | Nombre de lignes à échantillonner pour la détection de type | 10 |
-| `confidenceThreshold` | Seuil de confiance minimum pour l'attribution de type | 0.3 |
-| `useColumnRelations` | Utiliser les relations entre colonnes | true |
-| `useURIAnalysis` | Analyser les URI pour des informations supplémentaires | true |
-| `sparqlEndpoints.wikidata` | URL du point de terminaison SPARQL Wikidata | https://query.wikidata.org/sparql |
-| `sparqlEndpoints.dbpedia` | URL du point de terminaison SPARQL DBpedia | https://dbpedia.org/sparql |
+### Configuration principale
 
-Ces options vous permettent d'ajuster le comportement de l'algorithme selon vos besoins :
+Les options principales de l'algorithme CTA sont les suivantes :
 
-- **sampleSize** : Contrôle le nombre de lignes utilisées pour l'analyse. Augmentez cette valeur pour une détection plus précise mais plus lente, particulièrement pour les grands jeux de données avec des valeurs variées.
+| Option | Description | Valeur par défaut | Impact |
+|--------|-------------|-------------------|--------|
+| `sampleSize` | Nombre de lignes à échantillonner pour la détection de type | 10 | Équilibre entre précision et performance |
+| `confidenceThreshold` | Seuil de confiance minimum pour l'attribution de type | 0.3 | Équilibre entre couverture et fiabilité |
+| `useColumnRelations` | Utiliser les relations entre colonnes | true | Améliore la précision pour les colonnes liées |
+| `useURIAnalysis` | Analyser les URI pour des informations supplémentaires | true | Aide à la désambiguïsation des entités |
+| `sparqlEndpoints.wikidata` | URL du point de terminaison SPARQL Wikidata | https://query.wikidata.org/sparql | Accès aux données Wikidata |
+| `sparqlEndpoints.dbpedia` | URL du point de terminaison SPARQL DBpedia | https://dbpedia.org/sparql | Accès aux données DBpedia |
 
-- **confidenceThreshold** : Définit le seuil minimal de confiance pour qu'un type soit attribué à une colonne. Une valeur plus élevée rend l'algorithme plus strict et peut réduire les faux positifs, mais risque d'augmenter les faux négatifs.
+Ces options peuvent être configurées via la ligne de commande (voir section [Options de ligne de commande](#options-de-ligne-de-commande)) ou programmatiquement. Voici des détails sur l'impact de chaque paramètre :
 
-- **useColumnRelations** : Active ou désactive l'analyse des relations entre colonnes (étape 5). Désactiver cette option peut accélérer le traitement pour les fichiers CSV avec de nombreuses colonnes, mais peut réduire la précision des annotations lorsque les colonnes sont sémantiquement liées.
+#### sampleSize
 
-- **useURIAnalysis** : Active ou désactive l'analyse approfondie des URI (étape 6). Désactiver cette option peut accélérer le traitement, mais peut réduire la précision des annotations lorsque les URI contiennent des informations utiles.
+Contrôle le nombre de lignes utilisées pour l'analyse des types de colonnes.
 
-- **sparqlEndpoints** : Permet de configurer les points d'accès SPARQL pour Wikidata et DBpedia. Vous pouvez modifier ces URL si vous utilisez des miroirs locaux ou des endpoints alternatifs, ce qui peut améliorer les performances ou permettre de travailler hors ligne.
+**Impact :**
+- **Valeurs plus élevées** : Améliorent la précision en analysant plus de données, mais augmentent le temps de traitement
+- **Valeurs plus basses** : Accélèrent le traitement mais peuvent réduire la précision, surtout pour les colonnes hétérogènes
+- **Recommandation** : Augmentez cette valeur pour les grands jeux de données avec des valeurs diverses
+- **Cas particulier** : Pour les petits jeux de données (<100 lignes), envisagez d'utiliser toutes les lignes (définir à 0)
+
+#### confidenceThreshold
+
+Définit le seuil minimal de confiance pour qu'un type soit attribué à une colonne.
+
+**Impact :**
+- **Valeurs plus élevées** (proche de 1.0) : Garantissent des attributions de type plus fiables mais peuvent laisser certaines colonnes sans type
+- **Valeurs plus basses** : Augmentent la couverture mais peuvent introduire des attributions de type incorrectes
+- **Attention** : Les valeurs inférieures à 0.2 peuvent entraîner de nombreux faux positifs
+- **Attention** : Les valeurs supérieures à 0.7 peuvent être trop restrictives pour les colonnes ambiguës
+
+#### useColumnRelations
+
+Active ou désactive l'analyse des relations entre colonnes.
+
+**Impact :**
+- **Activé** : Améliore la précision en tenant compte des relations sémantiques entre colonnes
+- **Particulièrement utile** : Pour les colonnes liées (ex: pays-capitale, personne-profession)
+- **Désactivé** : Réduit le temps de traitement mais peut diminuer la précision pour les colonnes liées
+- **Recommandation** : Garder activé sauf si les performances sont critiques
+
+#### useURIAnalysis
+
+Active ou désactive l'analyse approfondie des URI.
+
+**Impact :**
+- **Activé** : Extrait des informations supplémentaires des URI pour améliorer la détection de type
+- **Avantage** : Aide à la désambiguïsation lorsque des entités ont des libellés similaires
+- **Désactivé** : Réduit légèrement le temps de traitement mais peut diminuer la précision pour les entités ambiguës
+- **Recommandation** : Impact minimal sur les performances, généralement recommandé de garder activé
+
+#### sparqlEndpoints
+
+Permet de configurer les points d'accès SPARQL pour Wikidata et DBpedia.
+
+**Impact :**
+- **Points d'accès alternatifs** : Peuvent améliorer les performances ou permettre un traitement hors ligne
+- **Attention** : Les points d'accès personnalisés peuvent avoir des limites de taux ou des capacités de requête différentes
+- **Prérequis** : S'assurer que le point d'accès prend en charge les mêmes modèles de requête
+
+### Configurations des modules
+
+Chaque module de l'application possède également sa propre configuration spécifique, toutes centralisées dans `src/config.ts`. Ces configurations avancées permettent un réglage fin du comportement de l'algorithme.
+
+#### ColumnRelationshipConfig
+
+Configuration pour l'analyse des relations entre colonnes.
+
+| Option | Description | Défaut | Impact |
+|--------|-------------|--------|--------|
+| `minRelationConfidence` | Seuil de confiance minimum pour les relations | 0.3 | Les valeurs plus élevées réduisent les faux positifs, les valeurs plus basses capturent plus de relations potentielles |
+| `maxRelationsPerColumn` | Nombre maximum de relations par colonne | 3 | Les valeurs plus basses améliorent les performances, la plupart des colonnes ont 1-2 relations significatives |
+
+#### EntitySearchConfig
+
+Configuration pour la recherche d'entités.
+
+| Option | Description | Défaut | Impact |
+|--------|-------------|--------|--------|
+| `maxEntitiesPerCell` | Nombre maximum d'entités par cellule | 3 | Les valeurs plus élevées capturent plus de correspondances potentielles mais augmentent le temps de traitement |
+| `minConfidence` | Seuil de confiance minimum pour les entités | 0.3 | Les valeurs plus élevées assurent des correspondances plus fiables mais peuvent réduire la couverture |
+| `useWikidata` | Utiliser Wikidata | true | Wikidata offre une large couverture dans de nombreux domaines |
+| `useDBpedia` | Utiliser DBpedia | true | DBpedia fournit des hiérarchies de types riches et des informations spécifiques au domaine |
+| `language` | Langue pour la recherche d'entités | "en" | Affecte la correspondance des entités dans les bases de connaissances multilingues |
+
+#### TypeAggregationConfig
+
+Configuration pour l'agrégation des types.
+
+| Option | Description | Défaut | Impact |
+|--------|-------------|--------|--------|
+| `minConfidenceThreshold` | Seuil de confiance minimum pour l'attribution de type | 0.3 | Les valeurs plus élevées assurent des attributions plus fiables mais peuvent laisser des colonnes sans type |
+| `relationBoostFactor` | Facteur de boost basé sur les relations | 0.2 | Les valeurs plus élevées donnent plus de poids aux relations entre colonnes |
+
+#### TypeExtractionConfig
+
+Configuration pour l'extraction des types.
+
+| Option | Description | Défaut | Impact |
+|--------|-------------|--------|--------|
+| `minTypeConfidence` | Seuil de confiance minimum pour les types | 0.2 | Les valeurs plus élevées assurent des types plus fiables mais peuvent réduire la variété des candidats |
+| `maxTypesPerColumn` | Nombre maximum de types par colonne | 5 | Les valeurs plus basses se concentrent sur les candidats de type les plus forts, améliorant les performances |
+| `useParentTypes` | Utiliser les types parents | true | Améliore la couverture en considérant des types plus généraux dans la hiérarchie |
+
+#### URIAnalysisConfig
+
+Configuration pour l'analyse des URI.
+
+| Option | Description | Défaut | Impact |
+|--------|-------------|--------|--------|
+| `confidenceBoost` | Boost de confiance lors d'une correspondance | 0.2 | Les valeurs plus élevées donnent plus de poids aux correspondances d'URI, améliorant potentiellement la désambiguïsation |
+| `minMatchLength` | Longueur minimum pour une correspondance | 3 | Les valeurs plus élevées réduisent les faux positifs en exigeant des correspondances plus longues |
 
 ## Structure du projet
 
@@ -185,6 +313,11 @@ Le projet est organisé par domaines fonctionnels pour faciliter la maintenance 
   - Définit les structures de données utilisées dans tout le projet
   - Inclut les interfaces pour les tables CSV, les cellules, les entités, les types sémantiques, etc.
   - Définit les types pour la configuration et les résultats d'annotation
+
+- `src/config.ts`: Configuration centralisée
+  - Regroupe toutes les configurations par défaut de l'application
+  - Définit les interfaces de configuration pour chaque module
+  - Facilite la maintenance et la personnalisation des paramètres
 
 - `src/modules`: Modules fonctionnels pour chaque étape de l'algorithme
   - `dataPreparation.ts`: Chargement et nettoyage des données

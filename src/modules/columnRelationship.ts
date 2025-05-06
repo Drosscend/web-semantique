@@ -7,24 +7,9 @@
  * 3. Leveraging the context provided by other columns to improve type detection
  */
 
+import { ColumnRelationshipConfig, DEFAULT_COLUMN_RELATIONSHIP_CONFIG } from "../config";
 import { logger } from "../logger";
 import type { ColumnRelation, EntityCandidate, SemanticType } from "../types";
-
-/**
- * Configuration for column relationship analysis
- */
-interface ColumnRelationshipConfig {
-	minRelationConfidence: number;
-	maxRelationsPerColumn: number;
-}
-
-/**
- * Default configuration for column relationship analysis
- */
-const DEFAULT_CONFIG: ColumnRelationshipConfig = {
-	minRelationConfidence: 0.3,
-	maxRelationsPerColumn: 3,
-};
 
 /**
  * Common semantic relationships between entity types
@@ -400,7 +385,7 @@ export class ColumnRelationshipService {
 	 * @param config Optional configuration
 	 */
 	constructor(config: Partial<ColumnRelationshipConfig> = {}) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
+		this.config = { ...DEFAULT_COLUMN_RELATIONSHIP_CONFIG, ...config };
 		logger.debug(
 			"Column relationship service initialized with config:",
 			this.config,

@@ -9,32 +9,11 @@
  * 5. Providing enriched entity candidates with types from multiple knowledge bases
  */
 
+import { DEFAULT_ENTITY_SEARCH_CONFIG, EntitySearchConfig } from "../config";
 import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type { CTAConfig, Cell, Entity, EntityCandidate, SemanticType } from "../types";
-
-/**
- * Configuration for entity search
- */
-interface EntitySearchConfig {
-	maxEntitiesPerCell: number;
-	minConfidence: number;
-	useWikidata: boolean;
-	useDBpedia: boolean;
-	language: string;
-}
-
-/**
- * Default configuration for entity search
- */
-const DEFAULT_CONFIG: EntitySearchConfig = {
-	maxEntitiesPerCell: 3,
-	minConfidence: 0.3,
-	useWikidata: true,
-	useDBpedia: true,
-	language: "en",
-};
 
 /**
  * Service for searching entities across knowledge bases
@@ -55,7 +34,7 @@ export class EntitySearchService {
 		dbpediaService?: DBpediaService,
 		wikidataService?: WikidataService,
 	) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
+		this.config = { ...DEFAULT_ENTITY_SEARCH_CONFIG, ...config };
 		this.dbpediaService = dbpediaService || new DBpediaService();
 		this.wikidataService = wikidataService || new WikidataService();
 

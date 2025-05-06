@@ -15,6 +15,7 @@
 
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import { DEFAULT_CTA_CONFIG } from "./config";
 import { logger } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
 
@@ -28,20 +29,6 @@ import { createTypeMappingService } from "./modules/typeMapping";
 import { analyzeURIs } from "./modules/uriAnalysis";
 
 /**
- * Default configuration for the CTA algorithm
- */
-const DEFAULT_CONFIG: CTAConfig = {
-	sampleSize: 10,
-	confidenceThreshold: 0.3,
-	useColumnRelations: true,
-	useURIAnalysis: true,
-	sparqlEndpoints: {
-		wikidata: "https://query.wikidata.org/sparql",
-		dbpedia: "https://dbpedia.org/sparql",
-	},
-};
-
-/**
  * Runs the Column Type Annotation algorithm on a CSV file
  * @param csvFilePath Path to the CSV file
  * @param config Optional configuration
@@ -52,7 +39,7 @@ export async function runCTA(
 	config: Partial<CTAConfig> = {},
 ): Promise<ColumnTypeAnnotation[]> {
 	const startTime = Date.now();
-	const mergedConfig: CTAConfig = { ...DEFAULT_CONFIG, ...config };
+	const mergedConfig: CTAConfig = { ...DEFAULT_CTA_CONFIG, ...config };
 
 	try {
 		logger.start(
@@ -174,7 +161,7 @@ Annotation de Type de Colonne CSV vers RDF (CTA)
 ===============================================
 
 UTILISATION:
-  bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie]
+  bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie] [options]
   bun run src\\index.ts --help
 
 DESCRIPTION:
@@ -188,19 +175,29 @@ ARGUMENTS:
 
 OPTIONS:
   --help                  Affiche ce message d'aide
+  --sample=N              Nombre de lignes à échantillonner (défaut: 10)
+                          Valeurs plus élevées: meilleure précision, temps de traitement plus long
+                          Valeurs plus basses: traitement plus rapide, précision potentiellement réduite
 
-CONFIGURATION:
-  La configuration peut être modifiée en utilisant l'API programmatique:
+  --confidence=N.N        Seuil de confiance minimum (défaut: 0.3)
+                          Valeurs plus élevées: annotations plus fiables mais moins nombreuses
+                          Valeurs plus basses: plus d'annotations mais potentiellement moins précises
 
-  - sampleSize            Nombre de lignes à échantillonner (défaut: 10)
-  - confidenceThreshold   Seuil de confiance minimum (défaut: 0.3)
-  - useColumnRelations    Utiliser l'analyse des relations (défaut: true)
-  - useURIAnalysis        Utiliser l'analyse des URI (défaut: true)
-  - sparqlEndpoints       Points d'accès SPARQL personnalisés
+  --no-relations          Désactive l'analyse des relations entre colonnes
+                          Accélère le traitement mais peut réduire la précision pour les colonnes liées
+
+  --no-uri-analysis       Désactive l'analyse des URI
+                          Accélère légèrement le traitement mais peut réduire la précision
+
+CONFIGURATION AVANCÉE:
+  Des options de configuration plus avancées sont disponibles via l'API programmatique
+  et dans le fichier src/config.ts. Consultez le README pour plus de détails.
 
 EXEMPLES:
   bun run src\\index.ts data\\test.csv
-  bun run src\\index.ts data\\test.csv output\\mes_annotations.json
+  bun run src\\index.ts data\\test.csv --sample=20 --confidence=0.5
+  bun run src\\index.ts data\\test.csv output\\mes_annotations.json --no-relations
+  bun run src\\index.ts data\\test.csv --sample=50 --no-uri-analysis
 
 Pour plus d'informations, consultez le README.md
 `);
@@ -222,16 +219,25 @@ async function main() {
 
 		if (args.length < 1) {
 			logger.error(
-				"Utilisation : bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie]",
+				"Utilisation : bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie] [options]",
 			);
 			logger.info("Utilisez --help pour plus d'informations");
 			process.exit(1);
 		}
 
-		const csvFilePath = args[0];
-		const outputPath =
-			args[1] ||
-			join(
+		// Extract the CSV file path (first non-option argument)
+		let csvFilePath = "";
+		let outputPath = "";
+		const nonOptionArgs = args.filter((arg) => !arg.startsWith("--"));
+
+		if (nonOptionArgs.length > 0) {
+			csvFilePath = nonOptionArgs[0];
+		}
+
+		if (nonOptionArgs.length > 1) {
+			outputPath = nonOptionArgs[1];
+		} else {
+			outputPath = join(
 				process.cwd(),
 				"output",
 				`${csvFilePath
@@ -239,9 +245,53 @@ async function main() {
 					.pop()
 					?.replace(".csv", "")}_annotations.json`,
 			);
+		}
 
-		// Run the CTA algorithm
-		const annotations = await runCTA(csvFilePath);
+		// Parse configuration options
+		const config: Partial<CTAConfig> = {};
+
+		// Parse sample size
+		const sampleArg = args.find((arg) => arg.startsWith("--sample="));
+		if (sampleArg) {
+			const sampleSize = Number.parseInt(sampleArg.split("=")[1], 10);
+			if (!Number.isNaN(sampleSize) && sampleSize >= 0) {
+				config.sampleSize = sampleSize;
+				logger.info(`Taille d'échantillon configurée à ${sampleSize}`);
+			} else {
+				logger.warn(
+					"Valeur invalide pour --sample, utilisation de la valeur par défaut",
+				);
+			}
+		}
+
+		// Parse confidence threshold
+		const confidenceArg = args.find((arg) => arg.startsWith("--confidence="));
+		if (confidenceArg) {
+			const confidence = Number.parseFloat(confidenceArg.split("=")[1]);
+			if (!Number.isNaN(confidence) && confidence >= 0 && confidence <= 1) {
+				config.confidenceThreshold = confidence;
+				logger.info(`Seuil de confiance configuré à ${confidence}`);
+			} else {
+				logger.warn(
+					"Valeur invalide pour --confidence, utilisation de la valeur par défaut",
+				);
+			}
+		}
+
+		// Parse column relations flag
+		if (args.includes("--no-relations")) {
+			config.useColumnRelations = false;
+			logger.info("Analyse des relations entre colonnes désactivée");
+		}
+
+		// Parse URI analysis flag
+		if (args.includes("--no-uri-analysis")) {
+			config.useURIAnalysis = false;
+			logger.info("Analyse des URI désactivée");
+		}
+
+		// Run the CTA algorithm with the configured options
+		const annotations = await runCTA(csvFilePath, config);
 
 		// Save the annotations
 		await saveAnnotations(annotations, outputPath);
