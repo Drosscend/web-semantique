@@ -8,13 +8,13 @@
  */
 
 import {
-	DBpediaServiceConfig,
+	type DBpediaServiceConfig,
 	DEFAULT_DBPEDIA_SERVICE_CONFIG,
 } from "../config";
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
-import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
 import { cacheService } from "./CacheService";
+import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
 
 /**
  * Service for interacting with DBpedia

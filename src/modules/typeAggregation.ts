@@ -10,7 +10,7 @@
 
 import {
 	DEFAULT_TYPE_AGGREGATION_CONFIG,
-	TypeAggregationConfig,
+	type TypeAggregationConfig,
 } from "../config";
 import { logger } from "../logger";
 import type {

@@ -6,8 +6,8 @@
  * 2. calculateStringSimilarity - For calculating similarity between strings
  */
 
+import type { RetryConfig } from "../config";
 import { logger } from "../logger";
-import { RetryConfig } from "../config";
 
 /**
  * Executes a query with retries

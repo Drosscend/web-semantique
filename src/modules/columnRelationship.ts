@@ -8,7 +8,7 @@
  */
 
 import {
-	ColumnRelationshipConfig,
+	type ColumnRelationshipConfig,
 	DEFAULT_COLUMN_RELATIONSHIP_CONFIG,
 } from "../config";
 import { logger } from "../logger";

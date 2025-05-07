@@ -7,7 +7,7 @@
  * 3. Extracting additional context from URIs to improve type detection
  */
 
-import { DEFAULT_URI_ANALYSIS_CONFIG, URIAnalysisConfig } from "../config";
+import { DEFAULT_URI_ANALYSIS_CONFIG, type URIAnalysisConfig } from "../config";
 import { logger } from "../logger";
 import type { EntityCandidate } from "../types";
 

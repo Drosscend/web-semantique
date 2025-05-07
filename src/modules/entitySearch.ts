@@ -9,7 +9,10 @@
  * 5. Providing enriched entity candidates with types from multiple knowledge bases
  */
 
-import { DEFAULT_ENTITY_SEARCH_CONFIG, EntitySearchConfig } from "../config";
+import {
+	DEFAULT_ENTITY_SEARCH_CONFIG,
+	type EntitySearchConfig,
+} from "../config";
 import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";

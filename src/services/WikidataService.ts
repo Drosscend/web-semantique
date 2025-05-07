@@ -7,14 +7,14 @@
  * 3. Querying for entity types (P31 - instance of)
  */
 
-import {
+import type {
 	DEFAULT_WIKIDATA_SERVICE_CONFIG,
 	WikidataServiceConfig,
 } from "../config";
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
-import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
 import { cacheService } from "./CacheService";
+import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
 
 /**
  * Service for interacting with Wikidata

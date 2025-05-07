@@ -23,7 +23,6 @@ import { TypeMappingService } from "./typeMapping";
 export class TypeExtractionService {
 	private dbpediaService: DBpediaService;
 	private wikidataService: WikidataService;
-	private typeMappingService: TypeMappingService;
 	private config: TypeExtractionConfig;
 
 	/**
@@ -33,7 +32,6 @@ export class TypeExtractionService {
 		this.config = { ...DEFAULT_TYPE_EXTRACTION_CONFIG };
 		this.dbpediaService = new DBpediaService();
 		this.wikidataService = new WikidataService();
-		this.typeMappingService = new TypeMappingService();
 
 		logger.debug(
 			"Service d'extraction de types initialisé avec la configuration :",
@@ -264,6 +262,12 @@ export class TypeExtractionService {
 			"http://dbpedia.org/ontology/MeanOfTransportation",
 			"http://dbpedia.org/ontology/PersonFunction",
 
+			// DBpedia number types
+			"http://dbpedia.org/ontology/Number",
+			"http://dbpedia.org/ontology/Integer",
+			"http://dbpedia.org/ontology/Decimal",
+			"http://dbpedia.org/ontology/Float",
+
 			// Wikidata top-level types
 			"http://www.wikidata.org/entity/Q35120", // Entity
 			"http://www.wikidata.org/entity/Q488383", // Object
@@ -281,6 +285,13 @@ export class TypeExtractionService {
 			"http://www.wikidata.org/entity/Q7725634", // Literary work
 			"http://www.wikidata.org/entity/Q386724", // Work
 			"http://www.wikidata.org/entity/Q1656682", // Event
+
+			// Wikidata number types
+			"http://www.wikidata.org/entity/Q12503", // number
+			"http://www.wikidata.org/entity/Q28920044", // numeric value
+			"http://www.wikidata.org/entity/Q199", // integer
+			"http://www.wikidata.org/entity/Q1413235", // decimal number
+			"http://www.wikidata.org/entity/Q11563", // floating point number
 		];
 
 		return tooGeneralTypes.includes(type.uri);
