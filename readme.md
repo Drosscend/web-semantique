@@ -1,10 +1,10 @@
 # Annotation de Type de Colonne CSV vers RDF (CTA)
 
-Ce projet implémente un algorithme d'Annotation de Type de Colonne (CTA) qui détermine automatiquement le type sémantique de chaque colonne dans un fichier CSV en utilisant les bases de connaissances Wikidata et DBpedia.
+Ce projet implémente un algorithme d'Annotation de Type de Colonne (CTA) qui détermine automatiquement le type sémantique de chaque colonne dans un fichier CSV ou dans un ensemble de fichiers CSV en utilisant les bases de connaissances Wikidata et DBpedia.
 
 ## Vue d'ensemble
 
-L'algorithme CTA fonctionne en plusieurs étapes détaillées ci-dessous :
+L'algorithme CTA fonctionne en plusieurs étapes détaillées ci-dessous et peut traiter soit un fichier CSV unique, soit un dossier contenant plusieurs fichiers CSV :
 
 1. **Préparation et nettoyage des données** : 
    - Chargement du fichier CSV dans une structure de données tabulaire
@@ -86,11 +86,13 @@ L'algorithme CTA fonctionne en plusieurs étapes détaillées ci-dessous :
 
 ### Ligne de commande
 
-Exécutez l'algorithme CTA sur un fichier CSV :
+Exécutez l'algorithme CTA sur un fichier CSV ou un dossier contenant des fichiers CSV :
 
 ```bash
-bun run src\index.ts <chemin-du-fichier-csv> [chemin-de-sortie] [options]
+bun run src\index.ts <chemin-du-fichier-csv-ou-dossier> [chemin-de-sortie] [options]
 ```
+
+#### Traitement d'un fichier unique
 
 Exemple de base :
 ```bash
@@ -110,6 +112,21 @@ Vous pouvez également spécifier un chemin de sortie personnalisé :
 bun run src\index.ts data\test.csv output\mes_annotations.json
 ```
 
+#### Traitement d'un dossier
+
+Vous pouvez également traiter tous les fichiers CSV d'un dossier en une seule commande :
+
+```bash
+bun run src\index.ts data\dossier_csv
+```
+
+Cette commande :
+1. Analysera tous les fichiers CSV présents dans le dossier spécifié
+2. Enregistrera toutes les annotations dans un seul fichier CSV nommé `cta_ft.csv` dans le répertoire `output`
+3. Ne générera pas de fichiers JSON pour chaque fichier CSV traité
+
+C'est particulièrement utile pour traiter des ensembles de données volumineux composés de plusieurs fichiers CSV.
+
 ### Options de ligne de commande
 
 L'algorithme CTA accepte plusieurs options pour personnaliser son comportement :
@@ -126,6 +143,12 @@ bun run src\index.ts data\test.csv --no-relations
 
 # Désactiver l'analyse des URI
 bun run src\index.ts data\test.csv --no-uri-analysis
+
+# Traiter tous les fichiers CSV d'un dossier
+bun run src\index.ts data\dossier_csv
+
+# Traiter un dossier avec des options personnalisées
+bun run src\index.ts data\dossier_csv --sample=50 --no-uri-analysis
 
 # Combiner plusieurs options
 bun run src\index.ts data\test.csv --sample=30 --confidence=0.4 --no-uri-analysis

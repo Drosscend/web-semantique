@@ -14,7 +14,8 @@
  */
 
 import { mkdir } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, join, extname } from "node:path";
+import { existsSync, statSync, readdirSync } from "node:fs";
 import { DEFAULT_CTA_CONFIG } from "./config";
 import { logger } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
@@ -184,7 +185,6 @@ export async function saveAnnotationsToCSV(
 		}
 
 		// Check if file exists and append to it instead of replacing
-		const { existsSync } = await import("node:fs");
 		if (existsSync(outputPath)) {
 			// Read existing content
 			const existingContent = await Bun.file(outputPath).text();
@@ -205,6 +205,65 @@ export async function saveAnnotationsToCSV(
 }
 
 /**
+ * Processes all CSV files in a directory and saves the results to a single cta_ft.csv file
+ * @param directoryPath Path to the directory containing CSV files
+ * @param config Optional configuration
+ */
+export async function processDirectory(
+	directoryPath: string,
+	config: Partial<CTAConfig> = {},
+): Promise<void> {
+	try {
+		logger.start(`Traitement du dossier ${directoryPath}`);
+
+		// Get all CSV files in the directory
+		const files = readdirSync(directoryPath)
+			.filter(file => extname(file).toLowerCase() === '.csv')
+			.map(file => join(directoryPath, file));
+
+		if (files.length === 0) {
+			logger.warn(`Aucun fichier CSV trouvé dans le dossier ${directoryPath}`);
+			return;
+		}
+
+		logger.info(`${files.length} fichiers CSV trouvés dans le dossier ${directoryPath}`);
+
+		// Process each CSV file
+		for (const csvFile of files) {
+			logger.info(`Traitement du fichier ${csvFile}`);
+
+			try {
+				// Run the CTA algorithm
+				const annotations = await runCTA(csvFile, config);
+
+				// Save the annotations to CSV only (skip JSON)
+				await saveAnnotationsToCSV(annotations, csvFile);
+
+				// Print a summary
+				logger.info(`Résumé des annotations pour ${basename(csvFile)} :`);
+				for (const annotation of annotations) {
+					logger.info(
+						`Colonne "${annotation.columnHeader}" : ${annotation.assignedType.label} (${annotation.confidence.toFixed(2)})`,
+					);
+				}
+			} catch (error) {
+				logger.error(
+					`Erreur lors du traitement du fichier ${csvFile} : ${error instanceof Error ? error.message : String(error)}`,
+				);
+				// Continue with the next file
+			}
+		}
+
+		logger.success(`Traitement du dossier ${directoryPath} terminé`);
+	} catch (error) {
+		logger.error(
+			`Erreur lors du traitement du dossier : ${error instanceof Error ? error.message : String(error)}`,
+		);
+		throw error;
+	}
+}
+
+/**
  * Displays help information about how to use the CTA algorithm
  */
 function displayHelp() {
@@ -213,19 +272,24 @@ Annotation de Type de Colonne CSV vers RDF (CTA)
 ===============================================
 
 UTILISATION:
-  bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie] [options]
+  bun run src\\index.ts <chemin-fichier-csv-ou-dossier> [chemin-sortie] [options]
   bun run src\\index.ts --help
 
 DESCRIPTION:
-  Cet outil analyse un fichier CSV et détermine automatiquement le type sémantique
-  de chaque colonne en utilisant les bases de connaissances Wikidata et DBpedia.
-  Les résultats sont enregistrés à la fois au format JSON et dans un fichier CSV
+  Cet outil analyse un fichier CSV ou un dossier contenant des fichiers CSV et détermine 
+  automatiquement le type sémantique de chaque colonne en utilisant les bases de connaissances 
+  Wikidata et DBpedia.
+
+  Pour un fichier unique, les résultats sont enregistrés à la fois au format JSON et dans un fichier CSV
   nommé "cta_ft.csv" dans le répertoire "output" au format: nom_fichier_sans_extension,colonne,uri.
 
+  Pour un dossier, tous les fichiers CSV sont traités et les résultats sont combinés dans un seul 
+  fichier "cta_ft.csv" (sans générer de fichiers JSON).
+
 ARGUMENTS:
-  <chemin-fichier-csv>    Chemin vers le fichier CSV à analyser
-  [chemin-sortie]         Chemin optionnel pour le fichier de sortie JSON
-                          (par défaut: output/<nom-fichier>_annotations.json)
+  <chemin-fichier-csv-ou-dossier>  Chemin vers le fichier CSV à analyser ou un dossier contenant des fichiers CSV
+  [chemin-sortie]                  Chemin optionnel pour le fichier de sortie JSON (uniquement pour un fichier CSV unique)
+                                   (par défaut: output/<nom-fichier>_annotations.json)
 
 OPTIONS:
   --help                  Affiche ce message d'aide
@@ -266,7 +330,8 @@ EXEMPLES:
   bun run src\\index.ts data\\test.csv
   bun run src\\index.ts data\\test.csv --sample=20 --confidence=0.5
   bun run src\\index.ts data\\test.csv output\\mes_annotations.json --no-relations
-  bun run src\\index.ts data\\test.csv --sample=50 --no-uri-analysis
+  bun run src\\index.ts data\\dossier_csv  # Traite tous les fichiers CSV dans le dossier
+  bun run src\\index.ts data\\dossier_csv --sample=50 --no-uri-analysis
   bun run src\\index.ts data\\test.csv --wikidata-cache=2000 --dbpedia-cache=2000
   bun run src\\index.ts data\\test.csv --cache-max-age=3600000 # 1 heure
   bun run src\\index.ts data\\test.csv --no-cache # Désactive le cache
@@ -291,19 +356,19 @@ async function main() {
 
 		if (args.length < 1) {
 			logger.error(
-				"Utilisation : bun run src\\index.ts <chemin-fichier-csv> [chemin-sortie] [options]",
+				"Utilisation : bun run src\\index.ts <chemin-fichier-csv-ou-dossier> [chemin-sortie] [options]",
 			);
 			logger.info("Utilisez --help pour plus d'informations");
 			process.exit(1);
 		}
 
-		// Extract the CSV file path (first non-option argument)
-		let csvFilePath = "";
+		// Extract the input path (first non-option argument)
+		let inputPath = "";
 		let outputPath = "";
 		const nonOptionArgs = args.filter((arg) => !arg.startsWith("--"));
 
 		if (nonOptionArgs.length > 0) {
-			csvFilePath = nonOptionArgs[0];
+			inputPath = nonOptionArgs[0];
 		}
 
 		if (nonOptionArgs.length > 1) {
@@ -312,7 +377,7 @@ async function main() {
 			outputPath = join(
 				process.cwd(),
 				"output",
-				`${csvFilePath
+				`${inputPath
 					.split(/[\/\\]/)
 					.pop()
 					?.replace(".csv", "")}_annotations.json`,
@@ -423,21 +488,39 @@ async function main() {
 			logger.info("Cache désactivé");
 		}
 
-		// Run the CTA algorithm with the configured options
-		const annotations = await runCTA(csvFilePath, config);
+		// Check if the input path exists
+		if (!existsSync(inputPath)) {
+			logger.error(`Le chemin spécifié n'existe pas : ${inputPath}`);
+			process.exit(1);
+		}
 
-		// Save the annotations to JSON
-		await saveAnnotations(annotations, outputPath);
+		// Check if the input path is a directory or a file
+		const isDirectory = statSync(inputPath).isDirectory();
 
-		// Save the annotations to CSV
-		await saveAnnotationsToCSV(annotations, csvFilePath);
+		if (isDirectory) {
+			// Process all CSV files in the directory
+			logger.info(`Le chemin spécifié est un dossier : ${inputPath}`);
+			await processDirectory(inputPath, config);
+		} else {
+			// Process a single CSV file
+			logger.info(`Le chemin spécifié est un fichier : ${inputPath}`);
 
-		// Print a summary
-		logger.info("Résumé des annotations :");
-		for (const annotation of annotations) {
-			logger.info(
-				`Colonne "${annotation.columnHeader}" : ${annotation.assignedType.label} (${annotation.confidence.toFixed(2)})`,
-			);
+			// Run the CTA algorithm with the configured options
+			const annotations = await runCTA(inputPath, config);
+
+			// Save the annotations to JSON
+			await saveAnnotations(annotations, outputPath);
+
+			// Save the annotations to CSV
+			await saveAnnotationsToCSV(annotations, inputPath);
+
+			// Print a summary
+			logger.info("Résumé des annotations :");
+			for (const annotation of annotations) {
+				logger.info(
+					`Colonne "${annotation.columnHeader}" : ${annotation.assignedType.label} (${annotation.confidence.toFixed(2)})`,
+				);
+			}
 		}
 	} catch (error) {
 		logger.error(
