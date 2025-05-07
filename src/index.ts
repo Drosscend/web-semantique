@@ -14,10 +14,9 @@
  */
 
 import { existsSync, readdirSync, statSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { DEFAULT_CTA_CONFIG } from "./config";
-import { logger } from "./logger";
+import { createProgressBar, logger } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
 
 import { analyzeColumnRelationships } from "./modules/columnRelationship";
@@ -114,152 +113,6 @@ export async function runCTA(
 	} catch (error) {
 		logger.error(
 			`Erreur lors de l'exécution de CTA : ${error instanceof Error ? error.message : String(error)}`,
-		);
-		throw error;
-	}
-}
-
-/**
- * Saves the column type annotations to a JSON file
- * @param annotations The annotations to save
- * @param outputPath The path to save the annotations to
- */
-export async function saveAnnotations(
-	annotations: ColumnTypeAnnotation[],
-	outputPath: string,
-): Promise<void> {
-	try {
-		const outputDir = outputPath
-			.split(/[\/\\]/)
-			.slice(0, -1)
-			.join("/");
-
-		// Create the output directory if it doesn't exist
-		try {
-			await mkdir(outputDir, { recursive: true });
-		} catch (error) {
-			// Ignore if directory already exists
-		}
-
-		// Save the annotations
-		await Bun.write(outputPath, JSON.stringify(annotations, null, 2));
-
-		logger.success(`Annotations enregistrées dans ${outputPath}`);
-	} catch (error) {
-		logger.error(
-			`Erreur lors de l'enregistrement des annotations : ${error instanceof Error ? error.message : String(error)}`,
-		);
-		throw error;
-	}
-}
-
-/**
- * Saves the column type annotations to a CSV file in the format: filename,column,uri
- * @param annotations The annotations to save
- * @param csvFilePath The original CSV file path
- */
-export async function saveAnnotationsToCSV(
-	annotations: ColumnTypeAnnotation[],
-	csvFilePath: string,
-): Promise<void> {
-	try {
-		const outputDir = join(process.cwd(), "output");
-		const outputPath = join(outputDir, "cta_ft.csv");
-
-		// Get filename without extension
-		const fileNameWithExt = basename(csvFilePath);
-		const fileName = fileNameWithExt.replace(/\.[^/.]+$/, "");
-
-		// Create output directory if it doesn't exist
-		try {
-			await mkdir(outputDir, { recursive: true });
-		} catch (error) {
-			// Ignore if directory already exists
-		}
-
-		// Create CSV content
-		let csvContent = "";
-
-		for (const annotation of annotations) {
-			csvContent += `${fileName},${annotation.columnIndex},${annotation.assignedType.uri}\n`;
-		}
-
-		// Check if file exists and append to it instead of replacing
-		if (existsSync(outputPath)) {
-			// Read existing content
-			const existingContent = await Bun.file(outputPath).text();
-			// Append new content to existing content
-			csvContent = existingContent + csvContent;
-		}
-
-		// Save the CSV file
-		await Bun.write(outputPath, csvContent);
-
-		logger.success(`Annotations CSV enregistrées dans ${outputPath}`);
-	} catch (error) {
-		logger.error(
-			`Erreur lors de l'enregistrement des annotations CSV : ${error instanceof Error ? error.message : String(error)}`,
-		);
-		throw error;
-	}
-}
-
-/**
- * Processes all CSV files in a directory and saves the results to a single cta_ft.csv file
- * @param directoryPath Path to the directory containing CSV files
- * @param config Optional configuration
- */
-export async function processDirectory(
-	directoryPath: string,
-	config: Partial<CTAConfig> = {},
-): Promise<void> {
-	try {
-		logger.start(`Traitement du dossier ${directoryPath}`);
-
-		// Get all CSV files in the directory
-		const files = readdirSync(directoryPath)
-			.filter((file) => extname(file).toLowerCase() === ".csv")
-			.map((file) => join(directoryPath, file));
-
-		if (files.length === 0) {
-			logger.warn(`Aucun fichier CSV trouvé dans le dossier ${directoryPath}`);
-			return;
-		}
-
-		logger.info(
-			`${files.length} fichiers CSV trouvés dans le dossier ${directoryPath}`,
-		);
-
-		// Process each CSV file
-		for (const csvFile of files) {
-			logger.info(`Traitement du fichier ${csvFile}`);
-
-			try {
-				// Run the CTA algorithm
-				const annotations = await runCTA(csvFile, config);
-
-				// Save the annotations to CSV only (skip JSON)
-				await saveAnnotationsToCSV(annotations, csvFile);
-
-				// Print a summary
-				logger.info(`Résumé des annotations pour ${basename(csvFile)} :`);
-				for (const annotation of annotations) {
-					logger.info(
-						`Colonne "${annotation.columnHeader}" : ${annotation.assignedType.label} (${annotation.confidence.toFixed(2)})`,
-					);
-				}
-			} catch (error) {
-				logger.error(
-					`Erreur lors du traitement du fichier ${csvFile} : ${error instanceof Error ? error.message : String(error)}`,
-				);
-				// Continue with the next file
-			}
-		}
-
-		logger.success(`Traitement du dossier ${directoryPath} terminé`);
-	} catch (error) {
-		logger.error(
-			`Erreur lors du traitement du dossier : ${error instanceof Error ? error.message : String(error)}`,
 		);
 		throw error;
 	}
@@ -374,6 +227,14 @@ export async function processInputCsv(
 			`${files.length} fichiers CSV trouvés dans le dossier ${csvDirectoryPath}`,
 		);
 
+		// Initialize progress tracking
+		let processedCount = 0;
+		const totalFiles = inputData.length;
+		console.info(
+			`Progression globale du traitement (${totalFiles} fichiers) :`,
+		);
+		console.info(createProgressBar(processedCount, totalFiles));
+
 		// Process each input data entry
 		for (const entry of inputData) {
 			// Find the CSV file with the matching ID
@@ -381,6 +242,8 @@ export async function processInputCsv(
 
 			if (!csvFile) {
 				logger.warn(`Aucun fichier CSV trouvé pour l'ID ${entry.id}`);
+				processedCount++;
+				console.info(createProgressBar(processedCount, totalFiles));
 				continue;
 			}
 
@@ -414,6 +277,10 @@ export async function processInputCsv(
 				);
 				// Continue with the next file
 			}
+
+			// Update progress bar after processing each file
+			processedCount++;
+			console.info(createProgressBar(processedCount, totalFiles));
 		}
 
 		// Save the updated input data back to the CSV file
