@@ -7,7 +7,10 @@
  * 3. Querying for entity types (P31 - instance of)
  */
 
-import { DEFAULT_WIKIDATA_SERVICE_CONFIG, WikidataServiceConfig } from "../config";
+import {
+	DEFAULT_WIKIDATA_SERVICE_CONFIG,
+	WikidataServiceConfig,
+} from "../config";
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
@@ -47,16 +50,18 @@ export class WikidataService {
 			logger.debug(`Recherche dans Wikidata pour : "${query}" (${language})`);
 
 			// Generate a cache key for this search
-			const cacheKey = cacheService.generateCacheKey("wbsearchentities", { 
-				query, 
-				language, 
-				limit 
+			const cacheKey = cacheService.generateCacheKey("wbsearchentities", {
+				query,
+				language,
+				limit,
 			});
 
 			// Check if the result is in the cache
 			const cachedResult = cacheService.getFromWikidataCache(cacheKey);
 			if (cachedResult !== undefined) {
-				logger.debug(`Utilisation du cache pour la recherche de "${query}" dans Wikidata`);
+				logger.debug(
+					`Utilisation du cache pour la recherche de "${query}" dans Wikidata`,
+				);
 				return cachedResult;
 			}
 
@@ -151,7 +156,9 @@ export class WikidataService {
 			// Check if the result is in the cache
 			const cachedResult = cacheService.getFromWikidataCache(cacheKey);
 			if (cachedResult !== undefined) {
-				logger.debug(`Utilisation du cache pour les types de l'entité ${entityUri}`);
+				logger.debug(
+					`Utilisation du cache pour les types de l'entité ${entityUri}`,
+				);
 				return cachedResult;
 			}
 
@@ -232,7 +239,9 @@ export class WikidataService {
 			// Check if the result is in the cache
 			const cachedResult = cacheService.getFromWikidataCache(cacheKey);
 			if (cachedResult !== undefined) {
-				logger.debug(`Utilisation du cache pour les types parents de ${typeUri}`);
+				logger.debug(
+					`Utilisation du cache pour les types parents de ${typeUri}`,
+				);
 				return cachedResult;
 			}
 

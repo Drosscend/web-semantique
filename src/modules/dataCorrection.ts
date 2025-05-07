@@ -463,10 +463,10 @@ export function standardizeNumberFormat(value: string): string {
 	}
 
 	// Remove all whitespace
-	let normalized = value.replace(/\s/g, '');
+	let normalized = value.replace(/\s/g, "");
 
 	// Handle negative numbers
-	const isNegative = normalized.startsWith('-');
+	const isNegative = normalized.startsWith("-");
 	if (isNegative) {
 		normalized = normalized.substring(1);
 	}
@@ -482,12 +482,14 @@ export function standardizeNumberFormat(value: string): string {
 	// If there's only one decimal separator
 	if (decimalCount === 1) {
 		// Find the last occurrence of either . or ,
-		const lastDot = normalized.lastIndexOf('.');
-		const lastComma = normalized.lastIndexOf(',');
+		const lastDot = normalized.lastIndexOf(".");
+		const lastComma = normalized.lastIndexOf(",");
 		const lastSeparator = Math.max(lastDot, lastComma);
 
 		// Split the number into integer and decimal parts
-		const integerPart = normalized.substring(0, lastSeparator).replace(/[.,]/g, '');
+		const integerPart = normalized
+			.substring(0, lastSeparator)
+			.replace(/[.,]/g, "");
 		const decimalPart = normalized.substring(lastSeparator + 1);
 
 		// Combine with proper decimal point
@@ -501,22 +503,24 @@ export function standardizeNumberFormat(value: string): string {
 	// 2. First separator is decimal (e.g., 1,234,567.89)
 	// 3. All separators are thousand separators (e.g., 1,234,567)
 
-	const lastDot = normalized.lastIndexOf('.');
-	const lastComma = normalized.lastIndexOf(',');
+	const lastDot = normalized.lastIndexOf(".");
+	const lastComma = normalized.lastIndexOf(",");
 	const lastSeparator = Math.max(lastDot, lastComma);
 
 	// Check if the last separator is followed by exactly 2 or 3 digits
 	const afterLastSeparator = normalized.substring(lastSeparator + 1);
 	if (afterLastSeparator.length === 2 || afterLastSeparator.length === 3) {
 		// Last separator is likely the decimal separator
-		const integerPart = normalized.substring(0, lastSeparator).replace(/[.,]/g, '');
+		const integerPart = normalized
+			.substring(0, lastSeparator)
+			.replace(/[.,]/g, "");
 		const decimalPart = afterLastSeparator;
 		const result = `${integerPart}.${decimalPart}`;
 		return isNegative ? `-${result}` : result;
 	}
 
 	// If we get here, assume all separators are thousand separators
-	const result = normalized.replace(/[.,]/g, '');
+	const result = normalized.replace(/[.,]/g, "");
 	return isNegative ? `-${result}` : result;
 }
 

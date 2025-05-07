@@ -7,7 +7,10 @@
  * 3. Querying for entity types
  */
 
-import { DBpediaServiceConfig, DEFAULT_DBPEDIA_SERVICE_CONFIG } from "../config";
+import {
+	DBpediaServiceConfig,
+	DEFAULT_DBPEDIA_SERVICE_CONFIG,
+} from "../config";
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";
 import { calculateStringSimilarity, queryWithRetries } from "./services.utils";
@@ -42,15 +45,17 @@ export class DBpediaService {
 			logger.debug(`Recherche dans DBpedia pour : "${query}"`);
 
 			// Generate a cache key for this search
-			const cacheKey = cacheService.generateCacheKey("dbpedia-lookup", { 
-				query, 
-				limit 
+			const cacheKey = cacheService.generateCacheKey("dbpedia-lookup", {
+				query,
+				limit,
 			});
 
 			// Check if the result is in the cache
 			const cachedResult = cacheService.getFromDBpediaCache(cacheKey);
 			if (cachedResult !== undefined) {
-				logger.debug(`Utilisation du cache pour la recherche de "${query}" dans DBpedia`);
+				logger.debug(
+					`Utilisation du cache pour la recherche de "${query}" dans DBpedia`,
+				);
 				return cachedResult;
 			}
 
@@ -141,7 +146,9 @@ export class DBpediaService {
 			// Check if the result is in the cache
 			const cachedResult = cacheService.getFromDBpediaCache(cacheKey);
 			if (cachedResult !== undefined) {
-				logger.debug(`Utilisation du cache pour les types de l'entité ${entityUri}`);
+				logger.debug(
+					`Utilisation du cache pour les types de l'entité ${entityUri}`,
+				);
 				return cachedResult;
 			}
 
@@ -216,7 +223,9 @@ export class DBpediaService {
 			// Check if the result is in the cache
 			const cachedResult = cacheService.getFromDBpediaCache(cacheKey);
 			if (cachedResult !== undefined) {
-				logger.debug(`Utilisation du cache pour les types parents de ${typeUri}`);
+				logger.debug(
+					`Utilisation du cache pour les types parents de ${typeUri}`,
+				);
 				return cachedResult;
 			}
 

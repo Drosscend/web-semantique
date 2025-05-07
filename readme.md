@@ -135,15 +135,15 @@ Options disponibles :
 
 | Option | Description | Valeur par défaut |
 |--------|-------------|-------------------|
-| `--sample=N` | Nombre de lignes à échantillonner pour la détection de type | 10 |
-| `--confidence=N.N` | Seuil de confiance minimum pour l'attribution de type | 0.3 |
-| `--no-relations` | Désactive l'analyse des relations entre colonnes | (activé) |
-| `--no-uri-analysis` | Désactive l'analyse des URI | (activé) |
-| `--wikidata-cache=N` | Taille maximale du cache Wikidata | 1000 |
-| `--dbpedia-cache=N` | Taille maximale du cache DBpedia | 1000 |
-| `--cache-max-age=N` | Durée de vie maximale des entrées du cache (en ms) | (illimité) |
-| `--no-cache` | Désactive complètement le cache | (activé) |
-| `--help` | Affiche l'aide et les informations d'utilisation | - |
+| `--sample=N` | Nombre de lignes à échantillonner pour la détection de type | 50                |
+| `--confidence=N.N` | Seuil de confiance minimum pour l'attribution de type | 0.3               |
+| `--no-relations` | Désactive l'analyse des relations entre colonnes | (activé)          |
+| `--no-uri-analysis` | Désactive l'analyse des URI | (activé)          |
+| `--wikidata-cache=N` | Taille maximale du cache Wikidata | 1000              |
+| `--dbpedia-cache=N` | Taille maximale du cache DBpedia | 1000              |
+| `--cache-max-age=N` | Durée de vie maximale des entrées du cache (en ms) | (illimité)        |
+| `--no-cache` | Désactive complètement le cache | (activé)          |
+| `--help` | Affiche l'aide et les informations d'utilisation | -                 |
 
 ### Utilisation programmatique
 

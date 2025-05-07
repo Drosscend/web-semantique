@@ -368,7 +368,9 @@ async function main() {
 		}
 
 		// Parse Wikidata cache size
-		const wikidataCacheArg = args.find((arg) => arg.startsWith("--wikidata-cache="));
+		const wikidataCacheArg = args.find((arg) =>
+			arg.startsWith("--wikidata-cache="),
+		);
 		if (wikidataCacheArg) {
 			const cacheSize = Number.parseInt(wikidataCacheArg.split("=")[1], 10);
 			if (!Number.isNaN(cacheSize) && cacheSize >= 0) {
@@ -382,7 +384,9 @@ async function main() {
 		}
 
 		// Parse DBpedia cache size
-		const dbpediaCacheArg = args.find((arg) => arg.startsWith("--dbpedia-cache="));
+		const dbpediaCacheArg = args.find((arg) =>
+			arg.startsWith("--dbpedia-cache="),
+		);
 		if (dbpediaCacheArg) {
 			const cacheSize = Number.parseInt(dbpediaCacheArg.split("=")[1], 10);
 			if (!Number.isNaN(cacheSize) && cacheSize >= 0) {
@@ -396,7 +400,9 @@ async function main() {
 		}
 
 		// Parse cache max age
-		const cacheMaxAgeArg = args.find((arg) => arg.startsWith("--cache-max-age="));
+		const cacheMaxAgeArg = args.find((arg) =>
+			arg.startsWith("--cache-max-age="),
+		);
 		if (cacheMaxAgeArg) {
 			const maxAge = Number.parseInt(cacheMaxAgeArg.split("=")[1], 10);
 			if (!Number.isNaN(maxAge) && maxAge >= 0) {
