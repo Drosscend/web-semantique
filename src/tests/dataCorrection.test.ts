@@ -197,48 +197,83 @@ describe("standardizeDateFormat", () => {
 });
 
 describe("standardizeNumberFormat", () => {
-	// Regular numbers with dots as decimal separators
-	test("should preserve numbers with dots as decimal separators", () => {
+	// Basic number formats
+	test("should handle basic number formats", () => {
+		expect(standardizeNumberFormat("123")).toBe("123");
 		expect(standardizeNumberFormat("123.45")).toBe("123.45");
-		expect(standardizeNumberFormat("0.5")).toBe("0.5");
-		expect(standardizeNumberFormat("1000.01")).toBe("1000.01");
-	});
-
-	// Numbers with commas as decimal separators
-	test("should convert commas to dots in numbers", () => {
 		expect(standardizeNumberFormat("123,45")).toBe("123.45");
+		expect(standardizeNumberFormat("0.5")).toBe("0.5");
 		expect(standardizeNumberFormat("0,5")).toBe("0.5");
-		expect(standardizeNumberFormat("1000,01")).toBe("1000.01");
 	});
 
-	// Numbers with multiple decimal points
-	test("should handle numbers with multiple decimal points", () => {
-		expect(standardizeNumberFormat("123.45.67")).toBe("123.4567");
-		expect(standardizeNumberFormat("123,45,67")).toBe("123.4567");
-		expect(standardizeNumberFormat("123.45,67")).toBe("123.4567");
-		expect(standardizeNumberFormat("123,45.67")).toBe("123.4567");
+	// Negative numbers
+	test("should handle negative numbers", () => {
+		expect(standardizeNumberFormat("-123")).toBe("-123");
+		expect(standardizeNumberFormat("-123.45")).toBe("-123.45");
+		expect(standardizeNumberFormat("-123,45")).toBe("-123.45");
+		expect(standardizeNumberFormat("−123.45")).toBe("−123.45"); // Unicode minus sign
 	});
 
-	// Numbers with thousands separators
-	test("should replace all commas with dots in numbers", () => {
-		expect(standardizeNumberFormat("1,234.56")).toBe("1.23456");
-		expect(standardizeNumberFormat("1,234,567.89")).toBe("1.23456789");
+	// Numbers with spaces
+	test("should handle numbers with spaces", () => {
+		expect(standardizeNumberFormat("1 234.56")).toBe("1234.56");
+		expect(standardizeNumberFormat("1 234,56")).toBe("1234.56");
+		expect(standardizeNumberFormat("1 234 567.89")).toBe("1234567.89");
+		expect(standardizeNumberFormat("1 234 567,89")).toBe("1234567.89");
 	});
 
-	// Non-numeric values
-	test("should return non-numeric values unchanged", () => {
-		expect(standardizeNumberFormat("abc")).toBe("abc");
-		expect(standardizeNumberFormat("123abc")).toBe("123abc");
-		expect(standardizeNumberFormat("abc123")).toBe("abc123");
+	// International formats
+	test("should handle international number formats", () => {
+		// European format (comma as decimal, dot as thousand separator)
+		expect(standardizeNumberFormat("1.234,56")).toBe("1234.56");
+		expect(standardizeNumberFormat("1.234.567,89")).toBe("1234567.89");
+
+		// US/UK format (dot as decimal, comma as thousand separator)
+		expect(standardizeNumberFormat("1,234.56")).toBe("1234.56");
+		expect(standardizeNumberFormat("1,234,567.89")).toBe("1234567.89");
+
+		// Indian format (comma as thousand separator, dot as decimal)
+		expect(standardizeNumberFormat("12,34,567.89")).toBe("1234567.89");
+	});
+
+	// Multiple separators
+	test("should handle numbers with multiple separators", () => {
+		// Mixed separators
+		expect(standardizeNumberFormat("1.234,567.89")).toBe("1234567.89");
+		expect(standardizeNumberFormat("1,234.567,89")).toBe("1234567.89");
+
+		// All dots
+		expect(standardizeNumberFormat("1.234.567.89")).toBe("1234567.89");
+
+		// All commas
+		expect(standardizeNumberFormat("1,234,567,89")).toBe("1234567.89");
 	});
 
 	// Edge cases
 	test("should handle edge cases appropriately", () => {
+		// Empty or invalid values
 		expect(standardizeNumberFormat("")).toBe("");
 		expect(standardizeNumberFormat(" ")).toBe(" ");
+		expect(standardizeNumberFormat("abc")).toBe("abc");
+		expect(standardizeNumberFormat("123abc")).toBe("123abc");
+
+		// Numbers with leading/trailing separators
 		expect(standardizeNumberFormat(".5")).toBe(".5");
-		expect(standardizeNumberFormat("-.5")).toBe("-.5");
-		expect(standardizeNumberFormat("123.")).toBe("123.");
+		expect(standardizeNumberFormat("5.")).toBe("5.");
+		expect(standardizeNumberFormat(",5")).toBe(",5");
+		expect(standardizeNumberFormat("5,")).toBe("5,");
+
+		// Very large numbers
+		expect(standardizeNumberFormat("1,234,567,890.12")).toBe("1234567890.12");
+		expect(standardizeNumberFormat("1.234.567.890,12")).toBe("1234567890.12");
+	});
+
+	// Scientific notation
+	test("should handle scientific notation", () => {
+		expect(standardizeNumberFormat("1.23e4")).toBe("1.23e4");
+		expect(standardizeNumberFormat("1,23e4")).toBe("1.23e4");
+		expect(standardizeNumberFormat("1.23E-4")).toBe("1.23E-4");
+		expect(standardizeNumberFormat("1,23E-4")).toBe("1.23E-4");
 	});
 });
 

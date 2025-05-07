@@ -417,26 +417,107 @@ export function standardizeDateFormat(value: string): string {
 }
 
 /**
- * Standardizes number formats
+ * Standardizes number formats to international format
  * @param value The value to standardize
  * @returns The value with standardized number format
  */
 export function standardizeNumberFormat(value: string): string {
-	// Check if the value is a number
-	if (/^[\d.,]+$/.test(value)) {
-		// Remove thousands separators and standardize decimal separator
-		const normalized = value.replace(/,/g, ".");
-
-		// If there are multiple decimal points, keep only the first one
-		const parts = normalized.split(".");
-		if (parts.length > 2) {
-			return `${parts[0]}.${parts.slice(1).join("")}`;
-		}
-
-		return normalized;
+	// If empty, return as is
+	if (!value) {
+		return value;
 	}
 
-	return value;
+	// If it's just whitespace, return as is
+	if (/^\s+$/.test(value)) {
+		return value;
+	}
+
+	// If ends with a separator, return as is
+	if (/^[\d]+[.,]$/.test(value)) {
+		return value;
+	}
+
+	// Check if it's a scientific notation number
+	if (/^[+-]?[\d.,\s]+[eE][+-]?\d+$/.test(value)) {
+		// Find the first e or E (not split with regex group)
+		const eIndex = value.search(/[eE]/);
+		const mantissa = value.slice(0, eIndex);
+		const exp = value.slice(eIndex + 1);
+		// Standardize the mantissa
+		const standardizedMantissa = standardizeNumberFormat(mantissa);
+		// Return the standardized scientific notation with original exponent case
+		return `${standardizedMantissa}${value[eIndex]}${exp}`;
+	}
+
+	// If not a number, return as is
+	if (!/^[+-]?[\d.,\s]+$/.test(value)) {
+		return value;
+	}
+
+	// Handle numbers starting with decimal separator
+	if (/^[.,]/.test(value)) {
+		// Keep the original decimal separator
+		const separator = value[0];
+		const rest = value.substring(1);
+		return `${separator}${rest}`;
+	}
+
+	// Remove all whitespace
+	let normalized = value.replace(/\s/g, '');
+
+	// Handle negative numbers
+	const isNegative = normalized.startsWith('-');
+	if (isNegative) {
+		normalized = normalized.substring(1);
+	}
+
+	// Count decimal separators
+	const decimalCount = (normalized.match(/[.,]/g) || []).length;
+
+	if (decimalCount === 0) {
+		// No decimal separator, just a whole number
+		return isNegative ? `-${normalized}` : normalized;
+	}
+
+	// If there's only one decimal separator
+	if (decimalCount === 1) {
+		// Find the last occurrence of either . or ,
+		const lastDot = normalized.lastIndexOf('.');
+		const lastComma = normalized.lastIndexOf(',');
+		const lastSeparator = Math.max(lastDot, lastComma);
+
+		// Split the number into integer and decimal parts
+		const integerPart = normalized.substring(0, lastSeparator).replace(/[.,]/g, '');
+		const decimalPart = normalized.substring(lastSeparator + 1);
+
+		// Combine with proper decimal point
+		const result = `${integerPart}.${decimalPart}`;
+		return isNegative ? `-${result}` : result;
+	}
+
+	// If there are multiple separators, we need to determine which is the decimal separator
+	// Common patterns:
+	// 1. Last separator is decimal (e.g., 1.234,56 or 1,234.56)
+	// 2. First separator is decimal (e.g., 1,234,567.89)
+	// 3. All separators are thousand separators (e.g., 1,234,567)
+
+	const lastDot = normalized.lastIndexOf('.');
+	const lastComma = normalized.lastIndexOf(',');
+	const lastSeparator = Math.max(lastDot, lastComma);
+
+	// Check if the last separator is followed by exactly 2 or 3 digits
+	const afterLastSeparator = normalized.substring(lastSeparator + 1);
+	if (afterLastSeparator.length === 2 || afterLastSeparator.length === 3) {
+		// Last separator is likely the decimal separator
+		const integerPart = normalized.substring(0, lastSeparator).replace(/[.,]/g, '');
+		const decimalPart = afterLastSeparator;
+		const result = `${integerPart}.${decimalPart}`;
+		return isNegative ? `-${result}` : result;
+	}
+
+	// If we get here, assume all separators are thousand separators
+	const result = normalized.replace(/[.,]/g, '');
+	return isNegative ? `-${result}` : result;
 }
 
 /**
