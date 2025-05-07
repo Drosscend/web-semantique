@@ -1,59 +1,34 @@
 # Annotation de Type de Colonne CSV vers RDF (CTA)
 
-Ce projet implémente un algorithme d'Annotation de Type de Colonne (CTA) qui détermine automatiquement le type sémantique de chaque colonne dans un fichier CSV ou dans un ensemble de fichiers CSV en utilisant les bases de connaissances Wikidata et DBpedia.
+Ce projet implémente un algorithme d'Annotation de Type de Colonne (CTA) qui détermine automatiquement le type sémantique de colonnes spécifiques dans des fichiers CSV en utilisant les bases de connaissances Wikidata et DBpedia.
 
 ## Vue d'ensemble
 
-L'algorithme CTA fonctionne en plusieurs étapes détaillées ci-dessous et peut traiter soit un fichier CSV unique, soit un dossier contenant plusieurs fichiers CSV :
+L'algorithme CTA prend en entrée un fichier CSV contenant des IDs et des colonnes à analyser, puis recherche les fichiers CSV correspondants dans un dossier spécifié. Il analyse ensuite les colonnes indiquées et remplit le fichier d'entrée avec les URIs des types détectés.
 
-1. **Préparation et nettoyage des données** : 
-   - Chargement du fichier CSV dans une structure de données tabulaire
-   - Suppression des espaces superflus en début et fin de chaîne
-   - Normalisation des caractères spéciaux (accents, diacritiques)
-   - Extraction des cellules pour chaque colonne avec échantillonnage configurable
-   - Création d'une structure de données optimisée pour le traitement
+Le processus fonctionne en plusieurs étapes :
 
-2. **Correction des données** :
-   - Normalisation des valeurs (majuscules en début de mot, suppression des caractères spéciaux)
-   - Correction orthographique basique pour les erreurs courantes
-   - Standardisation des formats pour améliorer la correspondance d'entités
-   - Préparation des données pour la recherche d'entités
+1. **Chargement du fichier d'entrée** : 
+   - Lecture du fichier CSV d'entrée contenant les IDs et les colonnes à analyser
+   - Format attendu : `ID,colonne,résultat`
+   - Exemple :
+     ```
+     IUPOCN5C,0,
+     BQC7DZZR,0,
+     C8RTQNU5,0,
+     ```
 
-3. **Recherche d'entités** :
-   - Recherche d'entités correspondantes dans Wikidata via son API
-   - Identification de plusieurs candidats potentiels pour chaque valeur de cellule
-   - Attribution de scores de confiance basés sur la qualité de la correspondance
-   - Création d'une liste d'entités candidates pour chaque cellule avec leurs métadonnées
+2. **Recherche des fichiers CSV** :
+   - Recherche des fichiers CSV correspondants dans le dossier spécifié
+   - Les noms des fichiers doivent correspondre aux IDs du fichier d'entrée
 
-4. **Correspondance entre types** :
-   - Application de mappings entre les types équivalents de DBpedia et Wikidata
-   - Enrichissement des candidats avec des informations de type supplémentaires
-   - Harmonisation des types entre les différentes sources de connaissances
-   - Amélioration de la cohérence des types à travers les différentes sources
+3. **Analyse des colonnes** :
+   - Pour chaque entrée du fichier d'entrée, l'algorithme analyse la colonne spécifiée dans le fichier CSV correspondant
+   - L'algorithme détermine automatiquement le type sémantique de la colonne en utilisant Wikidata et DBpedia
 
-5. **Analyse des relations entre colonnes** (optionnel) :
-   - Détection des relations sémantiques potentielles entre colonnes
-   - Identification des motifs comme pays-capitale, personne-profession, etc.
-   - Calcul des scores de relation pour renforcer la confiance dans les types détectés
-   - Création d'une structure de données représentant les relations entre colonnes
-
-6. **Analyse approfondie des URI** (optionnel) :
-   - Analyse des URI des entités pour extraire des informations supplémentaires
-   - Recherche de motifs et de structures dans les URI qui peuvent indiquer le type
-   - Renforcement des scores de confiance basé sur l'analyse des URI
-   - Enrichissement des candidats avec les informations extraites des URI
-
-7. **Extraction des types** :
-   - Récupération des types associés à chaque entité candidate
-   - Filtrage des types trop génériques ou non pertinents
-   - Calcul des scores pour chaque type basé sur la fréquence et la confiance
-   - Compilation des types par colonne avec leurs scores associés
-
-8. **Agrégation et vote** :
-   - Analyse des types candidats pour chaque colonne
-   - Sélection du type le plus probable basée sur les scores et la confiance
-   - Prise en compte des relations entre colonnes dans la décision finale
-   - Production des annotations finales avec types assignés et scores de confiance
+4. **Mise à jour du fichier d'entrée** :
+   - L'algorithme remplit la troisième colonne du fichier d'entrée avec les URIs des types détectés
+   - Le fichier d'entrée est mis à jour avec les résultats
 
 ## Installation
 
@@ -86,46 +61,42 @@ L'algorithme CTA fonctionne en plusieurs étapes détaillées ci-dessous et peut
 
 ### Ligne de commande
 
-Exécutez l'algorithme CTA sur un fichier CSV ou un dossier contenant des fichiers CSV :
+Exécutez l'algorithme CTA avec le fichier d'entrée et le dossier contenant les fichiers CSV :
 
 ```bash
-bun run src\index.ts <chemin-du-fichier-csv-ou-dossier> [chemin-de-sortie] [options]
+bun run src\index.ts <chemin-fichier-csv-entrée> <chemin-dossier-csv> [options]
 ```
 
-#### Traitement d'un fichier unique
-
-Exemple de base :
-```bash
-bun run src\index.ts data\test.csv
-```
-
-Cette commande analysera le fichier CSV et enregistrera les annotations dans deux formats :
-
-1. Un fichier JSON dans le répertoire `output`. Par défaut, le fichier de sortie sera nommé d'après le fichier d'entrée (par exemple, `test_annotations.json` pour `test.csv`). Ce fichier contient les annotations détaillées avec les types assignés, les scores de confiance, et les types alternatifs.
-
-2. Un fichier CSV nommé `cta_ft.csv` dans le répertoire `output`. Ce fichier contient les annotations au format simplifié : `nom_fichier_sans_extension,colonne,uri`. Par exemple : `test,0,http://www.wikidata.org/entity/Q6256`.
-
-Le processus comprend toutes les étapes décrites dans la vue d'ensemble, depuis le chargement des données jusqu'à l'annotation finale des types de colonnes.
-
-Vous pouvez également spécifier un chemin de sortie personnalisé :
-```bash
-bun run src\index.ts data\test.csv output\mes_annotations.json
-```
-
-#### Traitement d'un dossier
-
-Vous pouvez également traiter tous les fichiers CSV d'un dossier en une seule commande :
+#### Exemple de base
 
 ```bash
-bun run src\index.ts data\dossier_csv
+bun run src\index.ts input.csv data\dossier_csv
 ```
 
 Cette commande :
-1. Analysera tous les fichiers CSV présents dans le dossier spécifié
-2. Enregistrera toutes les annotations dans un seul fichier CSV nommé `cta_ft.csv` dans le répertoire `output`
-3. Ne générera pas de fichiers JSON pour chaque fichier CSV traité
+1. Lit le fichier `input.csv` contenant les IDs et les colonnes à analyser
+2. Recherche les fichiers CSV correspondants dans le dossier `data\dossier_csv`
+3. Analyse les colonnes spécifiées dans chaque fichier CSV
+4. Met à jour le fichier `input.csv` avec les URIs des types détectés
 
-C'est particulièrement utile pour traiter des ensembles de données volumineux composés de plusieurs fichiers CSV.
+#### Format du fichier d'entrée
+
+Le fichier CSV d'entrée doit être au format suivant :
+```
+ID,colonne,résultat
+```
+
+Où :
+- `ID` est l'identifiant du fichier CSV à analyser (sans l'extension .csv)
+- `colonne` est l'index de la colonne à analyser (commençant à 0)
+- `résultat` est la colonne qui sera remplie avec l'URI du type détecté
+
+Exemple :
+```
+IUPOCN5C,0,
+BQC7DZZR,0,
+C8RTQNU5,0,
+```
 
 ### Options de ligne de commande
 
@@ -133,25 +104,13 @@ L'algorithme CTA accepte plusieurs options pour personnaliser son comportement :
 
 ```bash
 # Augmenter la taille de l'échantillon pour une meilleure précision
-bun run src\index.ts data\test.csv --sample=20
+bun run src\index.ts input.csv data\dossier_csv --sample=20
 
 # Définir un seuil de confiance plus élevé pour des annotations plus fiables
-bun run src\index.ts data\test.csv --confidence=0.5
-
-# Désactiver l'analyse des relations entre colonnes pour un traitement plus rapide
-bun run src\index.ts data\test.csv --no-relations
-
-# Désactiver l'analyse des URI
-bun run src\index.ts data\test.csv --no-uri-analysis
-
-# Traiter tous les fichiers CSV d'un dossier
-bun run src\index.ts data\dossier_csv
-
-# Traiter un dossier avec des options personnalisées
-bun run src\index.ts data\dossier_csv --sample=50 --no-uri-analysis
+bun run src\index.ts input.csv data\dossier_csv --confidence=0.5
 
 # Combiner plusieurs options
-bun run src\index.ts data\test.csv --sample=30 --confidence=0.4 --no-uri-analysis
+bun run src\index.ts input.csv data\dossier_csv --sample=30 --confidence=0.4
 ```
 
 Options disponibles :
@@ -160,464 +119,7 @@ Options disponibles :
 |--------|-------------|-------------------|
 | `--sample=N` | Nombre de lignes à échantillonner pour la détection de type | 50                |
 | `--confidence=N.N` | Seuil de confiance minimum pour l'attribution de type | 0.3               |
-| `--no-relations` | Désactive l'analyse des relations entre colonnes | (activé)          |
-| `--no-uri-analysis` | Désactive l'analyse des URI | (activé)          |
-| `--wikidata-cache=N` | Taille maximale du cache Wikidata | 1000              |
-| `--dbpedia-cache=N` | Taille maximale du cache DBpedia | 1000              |
-| `--cache-max-age=N` | Durée de vie maximale des entrées du cache (en ms) | (illimité)        |
-| `--no-cache` | Désactive complètement le cache | (activé)          |
 | `--help` | Affiche l'aide et les informations d'utilisation | -                 |
-
-### Utilisation programmatique
-
-Vous pouvez également utiliser l'algorithme CTA de manière programmatique dans votre propre code :
-
-```typescript
-import { runCTA, saveAnnotations } from './src/index';
-
-async function main() {
-  // Exécution de l'algorithme CTA
-  const annotations = await runCTA('data\\test.csv', {
-    sampleSize: 20,                // Taille de l'échantillon
-    confidenceThreshold: 0.3,      // Seuil de confiance
-    useColumnRelations: true,      // Utiliser l'analyse des relations entre colonnes
-    useURIAnalysis: true,          // Utiliser l'analyse des URI
-    cache: {
-      wikidataMaxSize: 1000,       // Taille maximale du cache Wikidata
-      dbpediaMaxSize: 1000,        // Taille maximale du cache DBpedia
-      maxAge: undefined            // Durée de vie maximale des entrées du cache (en ms)
-    }
-    // Toutes les configurations sont centralisées dans src/config.ts
-  });
-
-  // Enregistrement des annotations
-  await saveAnnotations(annotations, 'output\\annotations.json');
-
-  // Utilisation des annotations
-  for (const annotation of annotations) {
-    console.log(`Colonne "${annotation.columnHeader}": ${annotation.assignedType.label} (confiance: ${annotation.confidence.toFixed(2)})`);
-
-    // Affichage des types alternatifs
-    if (annotation.alternativeTypes && annotation.alternativeTypes.length > 0) {
-      console.log("  Types alternatifs:");
-      for (const alt of annotation.alternativeTypes.slice(0, 3)) { // Afficher les 3 premiers types alternatifs
-        console.log(`  - ${alt.type.label} (score: ${alt.score.toFixed(2)}, confiance: ${alt.confidence.toFixed(2)})`);
-      }
-    }
-  }
-}
-
-main();
-```
-
-Cette approche vous permet d'intégrer le processus d'annotation dans vos propres applications et de personnaliser le traitement des résultats selon vos besoins.
-
-### Exécution de l'exemple
-
-Le dépôt inclut un fichier CSV d'exemple (`data/test.csv`) et un script de test :
-
-```bash
-bun run src/tests/test.ts
-```
-
-Cette commande exécutera l'algorithme CTA sur le fichier CSV d'exemple et générera des fichiers JSON dans le répertoire `output` pour chaque étape du processus. C'est un excellent moyen de voir en détail comment fonctionne l'algorithme et d'examiner les données intermédiaires produites à chaque étape.
-
-## Configuration
-
-L'algorithme CTA utilise une approche de configuration centralisée. Toutes les configurations par défaut sont regroupées dans le fichier `src/config.ts`, ce qui facilite la maintenance et la personnalisation.
-
-### Configuration principale
-
-Les options principales de l'algorithme CTA sont les suivantes :
-
-| Option | Description | Valeur par défaut | Impact |
-|--------|-------------|-------------------|--------|
-| `sampleSize` | Nombre de lignes à échantillonner pour la détection de type | 10 | Équilibre entre précision et performance |
-| `confidenceThreshold` | Seuil de confiance minimum pour l'attribution de type | 0.3 | Équilibre entre couverture et fiabilité |
-| `useColumnRelations` | Utiliser les relations entre colonnes | true | Améliore la précision pour les colonnes liées |
-| `useURIAnalysis` | Analyser les URI pour des informations supplémentaires | true | Aide à la désambiguïsation des entités |
-| `sparqlEndpoints.wikidata` | URL du point de terminaison SPARQL Wikidata | https://query.wikidata.org/sparql | Accès aux données Wikidata |
-| `sparqlEndpoints.dbpedia` | URL du point de terminaison SPARQL DBpedia | https://dbpedia.org/sparql | Accès aux données DBpedia |
-| `cache.wikidataMaxSize` | Taille maximale du cache Wikidata | 1000 | Équilibre entre taux de succès du cache et utilisation de la mémoire |
-| `cache.dbpediaMaxSize` | Taille maximale du cache DBpedia | 1000 | Équilibre entre taux de succès du cache et utilisation de la mémoire |
-| `cache.maxAge` | Durée de vie maximale des entrées du cache (en ms) | undefined | Fraîcheur des données vs efficacité du cache |
-
-Ces options peuvent être configurées via la ligne de commande (voir section [Options de ligne de commande](#options-de-ligne-de-commande)) ou programmatiquement. Voici des détails sur l'impact de chaque paramètre :
-
-#### sampleSize
-
-Contrôle le nombre de lignes utilisées pour l'analyse des types de colonnes.
-
-**Impact :**
-- **Valeurs plus élevées** : Améliorent la précision en analysant plus de données, mais augmentent le temps de traitement
-- **Valeurs plus basses** : Accélèrent le traitement mais peuvent réduire la précision, surtout pour les colonnes hétérogènes
-- **Recommandation** : Augmentez cette valeur pour les grands jeux de données avec des valeurs diverses
-- **Cas particulier** : Pour les petits jeux de données (<100 lignes), envisagez d'utiliser toutes les lignes (définir à 0)
-
-#### confidenceThreshold
-
-Définit le seuil minimal de confiance pour qu'un type soit attribué à une colonne.
-
-**Impact :**
-- **Valeurs plus élevées** (proche de 1.0) : Garantissent des attributions de type plus fiables mais peuvent laisser certaines colonnes sans type
-- **Valeurs plus basses** : Augmentent la couverture mais peuvent introduire des attributions de type incorrectes
-- **Attention** : Les valeurs inférieures à 0.2 peuvent entraîner de nombreux faux positifs
-- **Attention** : Les valeurs supérieures à 0.7 peuvent être trop restrictives pour les colonnes ambiguës
-
-#### useColumnRelations
-
-Active ou désactive l'analyse des relations entre colonnes.
-
-**Impact :**
-- **Activé** : Améliore la précision en tenant compte des relations sémantiques entre colonnes
-- **Particulièrement utile** : Pour les colonnes liées (ex: pays-capitale, personne-profession)
-- **Désactivé** : Réduit le temps de traitement mais peut diminuer la précision pour les colonnes liées
-- **Recommandation** : Garder activé sauf si les performances sont critiques
-
-#### useURIAnalysis
-
-Active ou désactive l'analyse approfondie des URI.
-
-**Impact :**
-- **Activé** : Extrait des informations supplémentaires des URI pour améliorer la détection de type
-- **Avantage** : Aide à la désambiguïsation lorsque des entités ont des libellés similaires
-- **Désactivé** : Réduit légèrement le temps de traitement mais peut diminuer la précision pour les entités ambiguës
-- **Recommandation** : Impact minimal sur les performances, généralement recommandé de garder activé
-
-#### sparqlEndpoints
-
-Permet de configurer les points d'accès SPARQL pour Wikidata et DBpedia.
-
-**Impact :**
-- **Points d'accès alternatifs** : Peuvent améliorer les performances ou permettre un traitement hors ligne
-- **Attention** : Les points d'accès personnalisés peuvent avoir des limites de taux ou des capacités de requête différentes
-- **Prérequis** : S'assurer que le point d'accès prend en charge les mêmes modèles de requête
-
-#### cache
-
-Configure le système de cache pour les requêtes SPARQL à Wikidata et DBpedia.
-
-**Impact :**
-- **wikidataMaxSize** : 
-  - **Valeurs plus élevées** : Améliorent le taux de succès du cache mais augmentent l'utilisation de la mémoire
-  - **Valeurs plus basses** : Réduisent l'utilisation de la mémoire mais peuvent diminuer le taux de succès du cache
-  - **Recommandation** : Ajustez en fonction de la diversité des requêtes et de la mémoire disponible
-
-- **dbpediaMaxSize** : 
-  - **Valeurs plus élevées** : Améliorent le taux de succès du cache mais augmentent l'utilisation de la mémoire
-  - **Valeurs plus basses** : Réduisent l'utilisation de la mémoire mais peuvent diminuer le taux de succès du cache
-  - **Recommandation** : Ajustez en fonction de la diversité des requêtes et de la mémoire disponible
-
-- **maxAge** : 
-  - **Définir une valeur** (en millisecondes) : Assure la fraîcheur des données mais réduit l'efficacité du cache
-  - **Non défini** (undefined) : Les entrées expirent uniquement via l'éviction LRU (Least Recently Used)
-  - **Recommandation** : Utile pour les données qui changent périodiquement, mais généralement non nécessaire pour les ontologies qui évoluent lentement
-
-### Configurations des modules
-
-Chaque module de l'application possède également sa propre configuration spécifique, toutes centralisées dans `src/config.ts`. Ces configurations avancées permettent un réglage fin du comportement de l'algorithme.
-
-#### ColumnRelationshipConfig
-
-Configuration pour l'analyse des relations entre colonnes.
-
-| Option | Description | Défaut | Impact |
-|--------|-------------|--------|--------|
-| `minRelationConfidence` | Seuil de confiance minimum pour les relations | 0.3 | Les valeurs plus élevées réduisent les faux positifs, les valeurs plus basses capturent plus de relations potentielles |
-| `maxRelationsPerColumn` | Nombre maximum de relations par colonne | 3 | Les valeurs plus basses améliorent les performances, la plupart des colonnes ont 1-2 relations significatives |
-
-#### EntitySearchConfig
-
-Configuration pour la recherche d'entités.
-
-| Option | Description | Défaut | Impact |
-|--------|-------------|--------|--------|
-| `maxEntitiesPerCell` | Nombre maximum d'entités par cellule | 3 | Les valeurs plus élevées capturent plus de correspondances potentielles mais augmentent le temps de traitement |
-| `minConfidence` | Seuil de confiance minimum pour les entités | 0.3 | Les valeurs plus élevées assurent des correspondances plus fiables mais peuvent réduire la couverture |
-| `useWikidata` | Utiliser Wikidata | true | Wikidata offre une large couverture dans de nombreux domaines |
-| `useDBpedia` | Utiliser DBpedia | true | DBpedia fournit des hiérarchies de types riches et des informations spécifiques au domaine |
-| `language` | Langue pour la recherche d'entités | "en" | Affecte la correspondance des entités dans les bases de connaissances multilingues |
-
-#### TypeAggregationConfig
-
-Configuration pour l'agrégation des types.
-
-| Option | Description | Défaut | Impact |
-|--------|-------------|--------|--------|
-| `minConfidenceThreshold` | Seuil de confiance minimum pour l'attribution de type | 0.3 | Les valeurs plus élevées assurent des attributions plus fiables mais peuvent laisser des colonnes sans type |
-| `relationBoostFactor` | Facteur de boost basé sur les relations | 0.2 | Les valeurs plus élevées donnent plus de poids aux relations entre colonnes |
-
-#### TypeExtractionConfig
-
-Configuration pour l'extraction des types.
-
-| Option | Description | Défaut | Impact |
-|--------|-------------|--------|--------|
-| `minTypeConfidence` | Seuil de confiance minimum pour les types | 0.2 | Les valeurs plus élevées assurent des types plus fiables mais peuvent réduire la variété des candidats |
-| `maxTypesPerColumn` | Nombre maximum de types par colonne | 5 | Les valeurs plus basses se concentrent sur les candidats de type les plus forts, améliorant les performances |
-| `useParentTypes` | Utiliser les types parents | true | Améliore la couverture en considérant des types plus généraux dans la hiérarchie |
-
-#### URIAnalysisConfig
-
-Configuration pour l'analyse des URI.
-
-| Option | Description | Défaut | Impact |
-|--------|-------------|--------|--------|
-| `confidenceBoost` | Boost de confiance lors d'une correspondance | 0.2 | Les valeurs plus élevées donnent plus de poids aux correspondances d'URI, améliorant potentiellement la désambiguïsation |
-| `minMatchLength` | Longueur minimum pour une correspondance | 3 | Les valeurs plus élevées réduisent les faux positifs en exigeant des correspondances plus longues |
-
-## Structure du projet
-
-Le projet est organisé par domaines fonctionnels pour faciliter la maintenance et l'extension :
-
-- `src/types`: Types et interfaces fondamentaux
-  - Définit les structures de données utilisées dans tout le projet
-  - Inclut les interfaces pour les tables CSV, les cellules, les entités, les types sémantiques, etc.
-  - Définit les types pour la configuration et les résultats d'annotation
-
-- `src/config.ts`: Configuration centralisée
-  - Regroupe toutes les configurations par défaut de l'application
-  - Définit les interfaces de configuration pour chaque module
-  - Facilite la maintenance et la personnalisation des paramètres
-
-- `src/modules`: Modules fonctionnels pour chaque étape de l'algorithme
-  - `dataPreparation.ts`: Chargement et nettoyage des données
-    - Fonctions pour charger les fichiers CSV
-    - Nettoyage des données (espaces, caractères spéciaux)
-    - Extraction des cellules pour traitement
-  - `dataCorrection.ts`: Correction et standardisation des données
-    - Correction orthographique
-    - Standardisation des formats
-    - Normalisation des noms d'entités
-  - `entitySearch.ts`: Recherche d'entités dans les bases de connaissances
-    - Recherche dans DBpedia et Wikidata
-    - Calcul des scores de confiance
-    - Sélection des meilleures entités candidates
-  - `typeMapping.ts`: Correspondance entre les types DBpedia et Wikidata
-    - Mappings entre types équivalents
-    - Renforcement des scores pour les types présents dans les deux sources
-  - `columnRelationship.ts`: Analyse des relations entre colonnes
-    - Détection des relations sémantiques
-    - Calcul des distances entre types
-    - Utilisation du contexte pour désambiguïsation
-  - `uriAnalysis.ts`: Analyse des URI pour information supplémentaire
-    - Extraction d'informations à partir des URI
-    - Renforcement de la confiance basé sur les URI
-  - `typeExtraction.ts`: Extraction des types pour chaque entité
-    - Récupération des types via les API
-    - Filtrage des types non pertinents
-    - Compilation avec scores de confiance
-  - `typeAggregation.ts`: Agrégation et vote pour les types finaux
-    - Sélection du type le plus probable
-    - Prise en compte des relations entre colonnes
-    - Production des annotations finales
-
-- `src/services`: Services pour interagir avec les API externes
-  - `DBpediaService.ts`: Service pour interagir avec DBpedia
-    - Recherche d'entités
-    - Récupération des types
-    - Gestion des requêtes SPARQL
-  - `WikidataService.ts`: Service pour interagir avec Wikidata
-    - Recherche d'entités
-    - Récupération des types via P31
-    - Gestion des requêtes SPARQL
-  - `CacheService.ts`: Service de cache pour les requêtes SPARQL
-    - Cache différencié pour Wikidata et DBpedia
-    - Génération de clés de cache intelligentes
-    - Méthodes d'invalidation et de vidage du cache
-    - Logging des hits et misses du cache
-
-- `src/index.ts`: Point d'entrée principal
-  - Orchestration de toutes les étapes de l'algorithme
-  - Gestion des arguments de ligne de commande
-  - Sauvegarde des résultats
-
-- `examples`: Fichiers CSV d'exemple et scripts de test
-  - Exemples pour démontrer le fonctionnement de l'algorithme
-  - Scripts de test pour validation
-
-## Exemple de scénario
-
-Considérons un fichier CSV simple avec deux colonnes contenant des pays et leurs capitales :
-
-```csv
-col0,col1
-France,Paris
-Germany,Berlin
-Italy,Rome
-Spain,Madrid
-Portugal,Lisbon
-```
-
-Voici comment l'algorithme CTA traite ce fichier, étape par étape, avec des exemples concrets des données produites à chaque étape :
-
-1. **Préparation et nettoyage des données** :
-   - Chargement du fichier CSV dans une structure tabulaire :
-   ```json
-   {
-     "headers": ["col0", "col1"],
-     "data": [
-       ["France", "Paris"],
-       ["Germany", "Berlin"],
-       ["Italy", "Rome"],
-       ["Spain", "Madrid"],
-       ["Portugal", "Lisbon"]
-     ]
-   }
-   ```
-   - Extraction des cellules pour chaque colonne pour traitement ultérieur
-
-2. **Correction des données** :
-   - Normalisation des valeurs pour améliorer la correspondance d'entités
-   - Les valeurs sont déjà bien formatées dans cet exemple, donc peu de corrections nécessaires
-
-3. **Recherche d'entités** :
-   - Pour la colonne "col0" (pays), plusieurs entités candidates sont identifiées pour chaque valeur :
-   ```json
-   {
-     "cell": {
-       "value": "France",
-       "rowIndex": 0,
-       "columnIndex": 0
-     },
-     "entity": {
-       "uri": "http://www.wikidata.org/entity/Q142",
-       "label": "France",
-       "description": "country in Western Europe",
-       "source": "Wikidata",
-       "confidence": 1
-     },
-     "types": [
-       {
-         "uri": "http://www.wikidata.org/entity/Q6256",
-         "label": "country",
-         "source": "Wikidata"
-       },
-       {
-         "uri": "http://www.wikidata.org/entity/Q7270",
-         "label": "republic",
-         "source": "Wikidata"
-       },
-       {
-         "uri": "http://www.wikidata.org/entity/Q3624078",
-         "label": "sovereign state",
-         "source": "Wikidata"
-       }
-     ],
-     "score": 1
-   }
-   ```
-   - D'autres candidats sont également identifiés (par exemple, "France" comme prénom ou nom de famille)
-   - Processus similaire pour la colonne "col1" (capitales)
-
-4. **Correspondance entre types** :
-   - Enrichissement des candidats avec des mappings entre types DBpedia et Wikidata
-   - Par exemple, le type "country" de Wikidata est associé au type "Country" de DBpedia
-
-5. **Analyse des relations entre colonnes** :
-   - Détection d'une relation entre les colonnes "col0" et "col1"
-   - Identification de la relation "capitale de" entre les entités
-   ```json
-   {
-     "sourceColumnIndex": 1,
-     "targetColumnIndex": 0,
-     "relationLabel": "capital of",
-     "confidence": 0.8,
-     "examples": [
-       {
-         "source": "Paris",
-         "target": "France"
-       },
-       {
-         "source": "Berlin",
-         "target": "Germany"
-       }
-     ]
-   }
-   ```
-
-6. **Analyse des URI** :
-   - Analyse des URI pour extraire des informations supplémentaires
-   - Renforcement des scores de confiance basé sur les motifs dans les URI
-
-7. **Extraction des types** :
-   - Compilation des types pour chaque colonne avec leurs scores :
-   ```json
-   {
-     "columnIndex": 0,
-     "types": [
-       {
-         "uri": "http://dbpedia.org/ontology/Country",
-         "label": "country",
-         "source": "DBpedia",
-         "score": 13.84,
-         "entityMatches": 15,
-         "confidence": 1
-       },
-       {
-         "uri": "http://www.wikidata.org/entity/Q6256",
-         "label": "country",
-         "source": "Wikidata",
-         "score": 5.73,
-         "entityMatches": 6,
-         "confidence": 0.48
-       }
-     ]
-   }
-   ```
-
-8. **Agrégation et vote** :
-   - Sélection finale des types pour chaque colonne :
-   ```json
-   [
-     {
-       "columnIndex": 0,
-       "columnHeader": "col0",
-       "assignedType": {
-         "uri": "http://dbpedia.org/ontology/PopulatedPlace",
-         "label": "populated place",
-         "source": "DBpedia"
-       },
-       "confidence": 1,
-       "alternativeTypes": [
-         {
-           "type": {
-             "uri": "http://dbpedia.org/ontology/Country",
-             "label": "country",
-             "source": "DBpedia"
-           },
-           "score": 13.84,
-           "entityMatches": 15,
-           "confidence": 1
-         }
-       ]
-     },
-     {
-       "columnIndex": 1,
-       "columnHeader": "col1",
-       "assignedType": {
-         "uri": "http://dbpedia.org/ontology/Settlement",
-         "label": "Settlement",
-         "source": "DBpedia"
-       },
-       "confidence": 1,
-       "alternativeTypes": [
-         {
-           "type": {
-             "uri": "http://dbpedia.org/ontology/City",
-             "label": "city",
-             "source": "DBpedia"
-           },
-           "score": 15,
-           "entityMatches": 15,
-           "confidence": 1
-         }
-       ]
-     }
-   ]
-   ```
-
-Le résultat final montre que la colonne "col0" est identifiée comme contenant des "populated place" (lieux peuplés) avec "country" (pays) comme type alternatif, et la colonne "col1" est identifiée comme contenant des "Settlement" (établissements humains) avec "city" (ville) comme type alternatif. Ces annotations peuvent être utilisées pour enrichir sémantiquement les données CSV d'origine, en exploitant non seulement le contenu des cellules mais aussi les relations sémantiques entre les colonnes.
 
 ## Auteur
 - [Véronési Kévin](mailto:kevin.veronesi@proton.me)

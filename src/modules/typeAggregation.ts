@@ -5,7 +5,8 @@
  * 1. Selecting the final type for each column
  * 2. Taking into account the relationships between columns
  * 3. Weighting based on confidence scores
- * 4. Producing the final result of annotation
+ * 4. Prioritizing Wikidata types over DBpedia types
+ * 5. Producing the final result of annotation
  */
 
 import {
@@ -80,6 +81,9 @@ export class TypeAggregationService {
 				columnTypes,
 				columnRelations,
 			);
+
+			// Prioritize Wikidata types
+			this.prioritizeWikidataTypes(adjustedCandidates);
 
 			// Sort by adjusted confidence
 			adjustedCandidates.sort((a, b) => b.confidence - a.confidence);
@@ -174,6 +178,38 @@ export class TypeAggregationService {
 					);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Prioritizes Wikidata types over DBpedia types
+	 * @param candidates The type candidates to adjust
+	 */
+	private prioritizeWikidataTypes(candidates: TypeCandidate[]): void {
+		// Check if there are any Wikidata types
+		const wikidataTypes = candidates.filter(
+			(candidate) => candidate.type.source === "Wikidata"
+		);
+
+		// If there are Wikidata types, boost their confidence
+		if (wikidataTypes.length > 0) {
+			// Find the highest confidence Wikidata type
+			const bestWikidataType = wikidataTypes.reduce(
+				(best, current) => (current.confidence > best.confidence ? current : best),
+				wikidataTypes[0]
+			);
+
+			// Boost the confidence of all Wikidata types
+			for (const candidate of candidates) {
+				if (candidate.type.source === "Wikidata") {
+					// Boost Wikidata types to ensure they are prioritized
+					candidate.confidence = Math.min(1.0, candidate.confidence + 0.2);
+				}
+			}
+
+			logger.debug(
+				`Prioritisation des types Wikidata pour la colonne. Meilleur type Wikidata: "${bestWikidataType.type.label}" avec une confiance de ${bestWikidataType.confidence.toFixed(2)}`
+			);
 		}
 	}
 

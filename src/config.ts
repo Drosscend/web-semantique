@@ -48,8 +48,8 @@ export interface CacheServiceConfig {
  * Default configuration for the cache service
  */
 export const DEFAULT_CACHE_SERVICE_CONFIG: CacheServiceConfig = {
-	wikidataMaxSize: 1000,
-	dbpediaMaxSize: 1000,
+	wikidataMaxSize: 50000,
+	dbpediaMaxSize: 50000,
 	// By default, no maxAge is set, so entries only expire via LRU eviction
 };
 

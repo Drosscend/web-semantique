@@ -13,9 +13,9 @@
  * 9. Outputs the results
  */
 
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
-import { basename, join, extname } from "node:path";
-import { existsSync, statSync, readdirSync } from "node:fs";
+import { basename, extname, join } from "node:path";
 import { DEFAULT_CTA_CONFIG } from "./config";
 import { logger } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
@@ -218,15 +218,17 @@ export async function processDirectory(
 
 		// Get all CSV files in the directory
 		const files = readdirSync(directoryPath)
-			.filter(file => extname(file).toLowerCase() === '.csv')
-			.map(file => join(directoryPath, file));
+			.filter((file) => extname(file).toLowerCase() === ".csv")
+			.map((file) => join(directoryPath, file));
 
 		if (files.length === 0) {
 			logger.warn(`Aucun fichier CSV trouvé dans le dossier ${directoryPath}`);
 			return;
 		}
 
-		logger.info(`${files.length} fichiers CSV trouvés dans le dossier ${directoryPath}`);
+		logger.info(
+			`${files.length} fichiers CSV trouvés dans le dossier ${directoryPath}`,
+		);
 
 		// Process each CSV file
 		for (const csvFile of files) {
@@ -272,28 +274,30 @@ Annotation de Type de Colonne CSV vers RDF (CTA)
 ===============================================
 
 UTILISATION:
-  bun run src\\index.ts <chemin-fichier-csv-ou-dossier> [chemin-sortie] [options]
+  bun run src\\index.ts <chemin-fichier-csv-entrée> <chemin-dossier-csv> [options]
   bun run src\\index.ts --help
 
 DESCRIPTION:
-  Cet outil analyse un fichier CSV ou un dossier contenant des fichiers CSV et détermine 
-  automatiquement le type sémantique de chaque colonne en utilisant les bases de connaissances 
+  Cet outil prend un fichier CSV contenant des IDs et des colonnes à analyser, puis détermine 
+  automatiquement le type sémantique de chaque colonne spécifiée en utilisant les bases de connaissances 
   Wikidata et DBpedia.
 
-  Pour un fichier unique, les résultats sont enregistrés à la fois au format JSON et dans un fichier CSV
-  nommé "cta_ft.csv" dans le répertoire "output" au format: nom_fichier_sans_extension,colonne,uri.
+  Le fichier CSV d'entrée doit être au format: ID,colonne,résultat
+  Exemple:
+    IUPOCN5C,0,
+    BQC7DZZR,0,
+    C8RTQNU5,0,
 
-  Pour un dossier, tous les fichiers CSV sont traités et les résultats sont combinés dans un seul 
-  fichier "cta_ft.csv" (sans générer de fichiers JSON).
+  L'outil recherche les fichiers CSV correspondants dans le dossier spécifié, analyse les colonnes
+  indiquées, et remplit la troisième colonne du fichier d'entrée avec les URIs des types détectés.
 
 ARGUMENTS:
-  <chemin-fichier-csv-ou-dossier>  Chemin vers le fichier CSV à analyser ou un dossier contenant des fichiers CSV
-  [chemin-sortie]                  Chemin optionnel pour le fichier de sortie JSON (uniquement pour un fichier CSV unique)
-                                   (par défaut: output/<nom-fichier>_annotations.json)
+  <chemin-fichier-csv-entrée>  Chemin vers le fichier CSV contenant les IDs et colonnes à analyser
+  <chemin-dossier-csv>         Chemin vers le dossier contenant les fichiers CSV à analyser
 
 OPTIONS:
   --help                  Affiche ce message d'aide
-  --sample=N              Nombre de lignes à échantillonner (défaut: 10)
+  --sample=N              Nombre de lignes à échantillonner (défaut: 50)
                           Valeurs plus élevées: meilleure précision, temps de traitement plus long
                           Valeurs plus basses: traitement plus rapide, précision potentiellement réduite
 
@@ -301,43 +305,131 @@ OPTIONS:
                           Valeurs plus élevées: annotations plus fiables mais moins nombreuses
                           Valeurs plus basses: plus d'annotations mais potentiellement moins précises
 
-  --no-relations          Désactive l'analyse des relations entre colonnes
-                          Accélère le traitement mais peut réduire la précision pour les colonnes liées
-
-  --no-uri-analysis       Désactive l'analyse des URI
-                          Accélère légèrement le traitement mais peut réduire la précision
-
-  --wikidata-cache=N      Taille maximale du cache Wikidata (défaut: 1000)
-                          Valeurs plus élevées: meilleur taux de succès du cache, plus de mémoire utilisée
-                          Valeurs plus basses: moins de mémoire utilisée, taux de succès potentiellement réduit
-
-  --dbpedia-cache=N       Taille maximale du cache DBpedia (défaut: 1000)
-                          Valeurs plus élevées: meilleur taux de succès du cache, plus de mémoire utilisée
-                          Valeurs plus basses: moins de mémoire utilisée, taux de succès potentiellement réduit
-
-  --cache-max-age=N       Durée de vie maximale des entrées du cache en millisecondes
-                          Non spécifié: les entrées expirent uniquement via l'éviction LRU
-                          Spécifié: assure la fraîcheur des données mais réduit l'efficacité du cache
-
-  --no-cache              Désactive complètement le cache
-                          Utile pour les tests ou pour forcer des requêtes fraîches
-
-CONFIGURATION AVANCÉE:
-  Des options de configuration plus avancées sont disponibles via l'API programmatique
-  et dans le fichier src/config.ts. Consultez le README pour plus de détails.
-
 EXEMPLES:
-  bun run src\\index.ts data\\test.csv
-  bun run src\\index.ts data\\test.csv --sample=20 --confidence=0.5
-  bun run src\\index.ts data\\test.csv output\\mes_annotations.json --no-relations
-  bun run src\\index.ts data\\dossier_csv  # Traite tous les fichiers CSV dans le dossier
-  bun run src\\index.ts data\\dossier_csv --sample=50 --no-uri-analysis
-  bun run src\\index.ts data\\test.csv --wikidata-cache=2000 --dbpedia-cache=2000
-  bun run src\\index.ts data\\test.csv --cache-max-age=3600000 # 1 heure
-  bun run src\\index.ts data\\test.csv --no-cache # Désactive le cache
+  bun run src\\index.ts input.csv data\\dossier_csv
+  bun run src\\index.ts input.csv data\\dossier_csv --sample=20 --confidence=0.5
 
 Pour plus d'informations, consultez le README.md
 `);
+}
+
+/**
+ * Processes a CSV file with IDs and expected results, and fills in the results
+ * @param inputCsvPath Path to the CSV file with IDs and expected results
+ * @param csvDirectoryPath Path to the directory containing CSV files
+ * @param config Optional configuration
+ */
+export async function processInputCsv(
+	inputCsvPath: string,
+	csvDirectoryPath: string,
+	config: Partial<CTAConfig> = {},
+): Promise<void> {
+	try {
+		logger.start(`Traitement du fichier d'entrée ${inputCsvPath}`);
+
+		// Load the input CSV file
+		const content = await Bun.file(inputCsvPath).text();
+		const lines = content
+			.split(/\r?\n/)
+			.filter((line) => line.trim().length > 0);
+
+		if (lines.length === 0) {
+			throw new Error("Le fichier CSV d'entrée est vide");
+		}
+
+		// Parse the input CSV file
+		const inputData: { id: string; columnIndex: number; result?: string }[] =
+			[];
+		for (const line of lines) {
+			const [id, columnIndexStr, result] = line.split(",");
+			const columnIndex = Number.parseInt(columnIndexStr, 10);
+
+			if (id && !Number.isNaN(columnIndex)) {
+				inputData.push({ id, columnIndex, result });
+			}
+		}
+
+		logger.info(`${inputData.length} lignes trouvées dans le fichier d'entrée`);
+
+		// Check if the CSV directory exists
+		if (!existsSync(csvDirectoryPath)) {
+			throw new Error(
+				`Le dossier CSV spécifié n'existe pas : ${csvDirectoryPath}`,
+			);
+		}
+
+		// Get all CSV files in the directory
+		const files = readdirSync(csvDirectoryPath)
+			.filter((file) => extname(file).toLowerCase() === ".csv")
+			.map((file) => join(csvDirectoryPath, file));
+
+		if (files.length === 0) {
+			logger.warn(
+				`Aucun fichier CSV trouvé dans le dossier ${csvDirectoryPath}`,
+			);
+			return;
+		}
+
+		logger.info(
+			`${files.length} fichiers CSV trouvés dans le dossier ${csvDirectoryPath}`,
+		);
+
+		// Process each input data entry
+		for (const entry of inputData) {
+			// Find the CSV file with the matching ID
+			const csvFile = files.find((file) => basename(file, ".csv") === entry.id);
+
+			if (!csvFile) {
+				logger.warn(`Aucun fichier CSV trouvé pour l'ID ${entry.id}`);
+				continue;
+			}
+
+			logger.info(
+				`Traitement du fichier ${csvFile} pour l'ID ${entry.id}, colonne ${entry.columnIndex}`,
+			);
+
+			try {
+				// Run the CTA algorithm
+				const annotations = await runCTA(csvFile, config);
+
+				// Find the annotation for the specified column
+				const annotation = annotations.find(
+					(a) => a.columnIndex === entry.columnIndex,
+				);
+
+				if (annotation) {
+					// Update the result in the input data
+					entry.result = annotation.assignedType.uri;
+					logger.info(
+						`Résultat pour ${entry.id}, colonne ${entry.columnIndex} : ${entry.result}`,
+					);
+				} else {
+					logger.warn(
+						`Aucune annotation trouvée pour la colonne ${entry.columnIndex} dans le fichier ${csvFile}`,
+					);
+				}
+			} catch (error) {
+				logger.error(
+					`Erreur lors du traitement du fichier ${csvFile} : ${error instanceof Error ? error.message : String(error)}`,
+				);
+				// Continue with the next file
+			}
+		}
+
+		// Save the updated input data back to the CSV file
+		let outputContent = "";
+		for (const entry of inputData) {
+			outputContent += `${entry.id},${entry.columnIndex},${entry.result || ""}\n`;
+		}
+
+		await Bun.write(inputCsvPath, outputContent);
+		logger.success(`Résultats enregistrés dans ${inputCsvPath}`);
+	} catch (error) {
+		logger.error(
+			`Erreur lors du traitement du fichier d'entrée : ${error instanceof Error ? error.message : String(error)}`,
+		);
+		throw error;
+	}
 }
 
 /**
@@ -354,35 +446,18 @@ async function main() {
 			return;
 		}
 
-		if (args.length < 1) {
+		if (args.length < 2) {
 			logger.error(
-				"Utilisation : bun run src\\index.ts <chemin-fichier-csv-ou-dossier> [chemin-sortie] [options]",
+				"Utilisation : bun run src\\index.ts <chemin-fichier-csv-entrée> <chemin-dossier-csv> [options]",
 			);
 			logger.info("Utilisez --help pour plus d'informations");
 			process.exit(1);
 		}
 
-		// Extract the input path (first non-option argument)
-		let inputPath = "";
-		let outputPath = "";
+		// Extract the input paths (non-option arguments)
 		const nonOptionArgs = args.filter((arg) => !arg.startsWith("--"));
-
-		if (nonOptionArgs.length > 0) {
-			inputPath = nonOptionArgs[0];
-		}
-
-		if (nonOptionArgs.length > 1) {
-			outputPath = nonOptionArgs[1];
-		} else {
-			outputPath = join(
-				process.cwd(),
-				"output",
-				`${inputPath
-					.split(/[\/\\]/)
-					.pop()
-					?.replace(".csv", "")}_annotations.json`,
-			);
-		}
+		const inputCsvPath = nonOptionArgs[0];
+		const csvDirectoryPath = nonOptionArgs[1];
 
 		// Parse configuration options
 		const config: Partial<CTAConfig> = {};
@@ -415,113 +490,28 @@ async function main() {
 			}
 		}
 
-		// Parse column relations flag
-		if (args.includes("--no-relations")) {
-			config.useColumnRelations = false;
-			logger.info("Analyse des relations entre colonnes désactivée");
-		}
-
-		// Parse URI analysis flag
-		if (args.includes("--no-uri-analysis")) {
-			config.useURIAnalysis = false;
-			logger.info("Analyse des URI désactivée");
-		}
-
 		// Initialize cache configuration if not present
 		if (!config.cache) {
 			config.cache = {};
 		}
 
-		// Parse Wikidata cache size
-		const wikidataCacheArg = args.find((arg) =>
-			arg.startsWith("--wikidata-cache="),
-		);
-		if (wikidataCacheArg) {
-			const cacheSize = Number.parseInt(wikidataCacheArg.split("=")[1], 10);
-			if (!Number.isNaN(cacheSize) && cacheSize >= 0) {
-				config.cache.wikidataMaxSize = cacheSize;
-				logger.info(`Taille du cache Wikidata configurée à ${cacheSize}`);
-			} else {
-				logger.warn(
-					"Valeur invalide pour --wikidata-cache, utilisation de la valeur par défaut",
-				);
-			}
-		}
-
-		// Parse DBpedia cache size
-		const dbpediaCacheArg = args.find((arg) =>
-			arg.startsWith("--dbpedia-cache="),
-		);
-		if (dbpediaCacheArg) {
-			const cacheSize = Number.parseInt(dbpediaCacheArg.split("=")[1], 10);
-			if (!Number.isNaN(cacheSize) && cacheSize >= 0) {
-				config.cache.dbpediaMaxSize = cacheSize;
-				logger.info(`Taille du cache DBpedia configurée à ${cacheSize}`);
-			} else {
-				logger.warn(
-					"Valeur invalide pour --dbpedia-cache, utilisation de la valeur par défaut",
-				);
-			}
-		}
-
-		// Parse cache max age
-		const cacheMaxAgeArg = args.find((arg) =>
-			arg.startsWith("--cache-max-age="),
-		);
-		if (cacheMaxAgeArg) {
-			const maxAge = Number.parseInt(cacheMaxAgeArg.split("=")[1], 10);
-			if (!Number.isNaN(maxAge) && maxAge >= 0) {
-				config.cache.maxAge = maxAge;
-				logger.info(`Durée de vie maximale du cache configurée à ${maxAge}ms`);
-			} else {
-				logger.warn(
-					"Valeur invalide pour --cache-max-age, utilisation de la valeur par défaut",
-				);
-			}
-		}
-
-		// Parse no-cache flag
-		if (args.includes("--no-cache")) {
-			// Set cache sizes to 0 to effectively disable caching
-			config.cache.wikidataMaxSize = 0;
-			config.cache.dbpediaMaxSize = 0;
-			logger.info("Cache désactivé");
-		}
-
-		// Check if the input path exists
-		if (!existsSync(inputPath)) {
-			logger.error(`Le chemin spécifié n'existe pas : ${inputPath}`);
+		// Check if the input paths exist
+		if (!existsSync(inputCsvPath)) {
+			logger.error(
+				`Le fichier CSV d'entrée spécifié n'existe pas : ${inputCsvPath}`,
+			);
 			process.exit(1);
 		}
 
-		// Check if the input path is a directory or a file
-		const isDirectory = statSync(inputPath).isDirectory();
-
-		if (isDirectory) {
-			// Process all CSV files in the directory
-			logger.info(`Le chemin spécifié est un dossier : ${inputPath}`);
-			await processDirectory(inputPath, config);
-		} else {
-			// Process a single CSV file
-			logger.info(`Le chemin spécifié est un fichier : ${inputPath}`);
-
-			// Run the CTA algorithm with the configured options
-			const annotations = await runCTA(inputPath, config);
-
-			// Save the annotations to JSON
-			await saveAnnotations(annotations, outputPath);
-
-			// Save the annotations to CSV
-			await saveAnnotationsToCSV(annotations, inputPath);
-
-			// Print a summary
-			logger.info("Résumé des annotations :");
-			for (const annotation of annotations) {
-				logger.info(
-					`Colonne "${annotation.columnHeader}" : ${annotation.assignedType.label} (${annotation.confidence.toFixed(2)})`,
-				);
-			}
+		if (!existsSync(csvDirectoryPath)) {
+			logger.error(
+				`Le dossier CSV spécifié n'existe pas : ${csvDirectoryPath}`,
+			);
+			process.exit(1);
 		}
+
+		// Process the input CSV file
+		await processInputCsv(inputCsvPath, csvDirectoryPath, config);
 	} catch (error) {
 		logger.error(
 			`Erreur : ${error instanceof Error ? error.message : String(error)}`,
