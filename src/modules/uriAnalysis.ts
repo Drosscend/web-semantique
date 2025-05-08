@@ -42,6 +42,9 @@ export class URIAnalysisService {
 			column.map((candidate) => ({ ...candidate })),
 		);
 
+		// Local cache: Map<uri+rowIndex, Set<matchedValues>>
+		const matchCache = new Map<string, Set<string>>();
+
 		// For each column
 		for (let i = 0; i < enhancedCandidates.length; i++) {
 			const currentColumn = enhancedCandidates[i];
@@ -49,46 +52,58 @@ export class URIAnalysisService {
 			// For each candidate in the current column
 			for (let j = 0; j < currentColumn.length; j++) {
 				const candidate = currentColumn[j];
-				// Ensure uri exists and is a string
-				if (
-					!candidate.entity?.uri ||
-					typeof candidate.entity.uri !== "string"
-				) {
+				if (!candidate.entity?.uri || typeof candidate.entity.uri !== "string") {
 					continue;
 				}
 				const uri = candidate.entity.uri.toLowerCase();
+				const rowIndex = candidate.cell.rowIndex;
+				const cacheKey = `${uri}#${rowIndex}`;
+
+				let matched = false;
+				let matchedValues = matchCache.get(cacheKey);
+				if (!matchedValues) {
+					matchedValues = new Set();
+					matchCache.set(cacheKey, matchedValues);
+				}
 
 				// Check for matches with values from other columns
 				for (let k = 0; k < enhancedCandidates.length; k++) {
 					// Skip the current column
 					if (k === i) continue;
-
 					const otherColumn = enhancedCandidates[k];
 
 					// Find candidates in the other column that are in the same row
 					const sameRowCandidates = otherColumn.filter(
-						(c) => c.cell.rowIndex === candidate.cell.rowIndex,
+						(c) => c.cell.rowIndex === rowIndex,
 					);
-
 					for (const otherCandidate of sameRowCandidates) {
 						const value = otherCandidate.cell.value.toLowerCase();
-
-						// Skip short values
 						if (value.length < this.config.minMatchLength) continue;
-
-						// Check if the value appears in the URI
-						if (this.containsValue(uri, value)) {
-							// Boost the confidence of this candidate
-							candidate.score = Math.min(
-								1.0,
-								candidate.score + this.config.confidenceBoost,
-							);
-							logger.debug(
-								`Confiance augmentée pour "${candidate.entity.label}" basée sur la correspondance URI avec "${value}"`,
-							);
+						// Precompile regex for value (alphanum only)
+						const normalizedValue = this.normalizeForMatching(value);
+						const lastPart = uri.split(/[/#]/).pop() || uri;
+						const normalizedLastPart = this.normalizeForMatching(lastPart);
+						const regex = new RegExp(normalizedValue, "i");
+						if (normalizedValue && regex.test(normalizedLastPart)) {
+							if (!matchedValues.has(normalizedValue)) {
+								candidate.score = Math.min(
+									1.0,
+									candidate.score + this.config.confidenceBoost,
+								);
+								matchedValues.add(normalizedValue);
+								logger.debug(
+									`[Col ${i}, Row ${rowIndex}] URI match: "${candidate.entity.label}" boosted by value "${value}" (regex: ${regex})`,
+								);
+							}
+							matched = true;
 							break;
 						}
 					}
+				}
+				if (!matched) {
+					logger.debug(
+						`[Col ${i}, Row ${rowIndex}] No URI match for "${candidate.entity.label}" (uri: ${uri})`,
+					);
 				}
 			}
 		}
