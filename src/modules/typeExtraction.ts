@@ -15,11 +15,13 @@ import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type { EntityCandidate, SemanticType, TypeCandidate } from "../types";
+import { TOO_GENERAL_TYPES } from "../dataset/tooGeneralTypes";
+import { TypeMappingService } from "./typeMapping";
 
 /**
  * Service for extracting and organizing types from entities
  */
-export class TypeExtractionService {
+class TypeExtractionService {
 	private dbpediaService: DBpediaService;
 	private wikidataService: WikidataService;
 	private readonly config: TypeExtractionConfig;
@@ -99,7 +101,91 @@ export class TypeExtractionService {
 		logger.debug(
 			`${filteredTypes.length} candidats de type extraits pour la colonne`,
 		);
-		return filteredTypes;
+
+		// Log each extracted type with score and confidence
+		for (const type of filteredTypes) {
+			logger.debug(`Type extrait: ${type.type.uri} (label: ${type.type.label}), score: ${type.score.toFixed(2)}, confiance: ${type.confidence.toFixed(2)}, entityMatches: ${type.entityMatches}`);
+		}
+		if (filteredTypes.length === 0) {
+			logger.info("Aucun type extrait pour cette colonne (après filtrage)");
+		}
+
+		// Prioritize Wikidata types and convert DBpedia types
+		const prioritizedTypes: TypeCandidate[] = [];
+		const typeUriSet = new Set<string>();
+		const typeMappingService = new TypeMappingService();
+
+		// Process Wikidata types first
+		const wikidataTypes = filteredTypes.filter(
+			(candidate) => candidate.type.source === "Wikidata"
+		);
+		
+		if (wikidataTypes.length > 0) {
+			logger.debug(
+				`Found ${wikidataTypes.length} direct Wikidata types for column`
+			);
+			
+			for (const candidate of wikidataTypes) {
+				const confidenceBoost = Math.min(0.3, 0.2 * candidate.confidence + 0.1);
+				const adjustedCandidate = {
+					...candidate,
+					confidence: Math.min(1.0, candidate.confidence + confidenceBoost)
+				};
+				
+				prioritizedTypes.push(adjustedCandidate);
+				typeUriSet.add(candidate.type.uri);
+			}
+		}
+
+		// Then convert DBpedia types to Wikidata
+		const dbpediaTypes = filteredTypes.filter(
+			(candidate) => candidate.type.source === "DBpedia"
+		);
+		
+		if (dbpediaTypes.length > 0) {
+			logger.debug(
+				`Attempting to convert ${dbpediaTypes.length} DBpedia types to Wikidata`
+			);
+			
+			for (const dbpediaCandidate of dbpediaTypes) {
+				const wikidataEquivalents = typeMappingService.convertDbpediaTypeToWikidata(dbpediaCandidate.type);
+				
+				if (wikidataEquivalents.length > 0) {
+					for (const wikidataType of wikidataEquivalents) {
+						if (!typeUriSet.has(wikidataType.uri)) {
+							const convertedCandidate = {
+								type: wikidataType,
+								score: dbpediaCandidate.score,
+								entityMatches: dbpediaCandidate.entityMatches,
+								confidence: dbpediaCandidate.confidence
+							};
+							
+							prioritizedTypes.push(convertedCandidate);
+							typeUriSet.add(wikidataType.uri);
+						}
+					}
+				}
+			}
+		}
+
+		// Fallback to original types if no Wikidata types found
+		if (prioritizedTypes.length === 0) {
+			logger.warn(
+				"No Wikidata types (direct or converted) found for this column. Using original types."
+			);
+			return filteredTypes;
+		}
+
+		// Sort by confidence and limit to max types
+		const finalTypes = prioritizedTypes
+			.sort((a, b) => b.confidence - a.confidence)
+			.slice(0, this.config.maxTypesPerColumn);
+			
+		logger.info(
+			`${finalTypes.length} final Wikidata types for column: ${finalTypes.map(t => t.type.label).join(", ")}`
+		);
+			
+		return finalTypes;
 	}
 
 	/**
@@ -141,7 +227,10 @@ export class TypeExtractionService {
 		// Process each type
 		for (const type of types) {
 			// Skip too general types
-			if (this.isTooGeneral(type)) continue;
+			if (this.isTooGeneral(type)) {
+				logger.info(`Type ${type.uri} ignoré car trop général`);
+				continue;
+			}
 
 			// Add or update the type score
 			const key = type.uri;
@@ -244,56 +333,7 @@ export class TypeExtractionService {
 	 * @returns True if the type is too general
 	 */
 	private isTooGeneral(type: SemanticType): boolean {
-		// List of URIs for types that are too general
-		const tooGeneralTypes = [
-			"http://www.w3.org/2002/07/owl#Thing",
-			"http://schema.org/Thing",
-
-			// DBpedia top-level types
-			"http://dbpedia.org/ontology/Thing",
-			"http://dbpedia.org/ontology/Agent",
-			"http://dbpedia.org/ontology/Place",
-			"http://dbpedia.org/ontology/TopicalConcept",
-			"http://dbpedia.org/ontology/Event",
-			"http://dbpedia.org/ontology/Work",
-			"http://dbpedia.org/ontology/Species",
-			"http://dbpedia.org/ontology/TimePeriod",
-			"http://dbpedia.org/ontology/MeanOfTransportation",
-			"http://dbpedia.org/ontology/PersonFunction",
-
-			// DBpedia number types
-			"http://dbpedia.org/ontology/Number",
-			"http://dbpedia.org/ontology/Integer",
-			"http://dbpedia.org/ontology/Decimal",
-			"http://dbpedia.org/ontology/Float",
-
-			// Wikidata top-level types
-			"http://www.wikidata.org/entity/Q35120", // Entity
-			"http://www.wikidata.org/entity/Q488383", // Object
-			"http://www.wikidata.org/entity/Q7184903", // Abstract object
-			"http://www.wikidata.org/entity/Q830077", // Subject
-			"http://www.wikidata.org/entity/Q35120", // Entity
-			"http://www.wikidata.org/entity/Q1190554", // Occurrence
-			"http://www.wikidata.org/entity/Q186081", // Time interval
-			"http://www.wikidata.org/entity/Q5", // Human
-			"http://www.wikidata.org/entity/Q795052", // Information entity
-			"http://www.wikidata.org/entity/Q4406616", // Structure
-			"http://www.wikidata.org/entity/Q618123", // Geographic feature
-			"http://www.wikidata.org/entity/Q2221906", // Geographic location
-			"http://www.wikidata.org/entity/Q43229", // Organization
-			"http://www.wikidata.org/entity/Q7725634", // Literary work
-			"http://www.wikidata.org/entity/Q386724", // Work
-			"http://www.wikidata.org/entity/Q1656682", // Event
-
-			// Wikidata number types
-			"http://www.wikidata.org/entity/Q12503", // number
-			"http://www.wikidata.org/entity/Q28920044", // numeric value
-			"http://www.wikidata.org/entity/Q199", // integer
-			"http://www.wikidata.org/entity/Q1413235", // decimal number
-			"http://www.wikidata.org/entity/Q11563", // floating point number
-		];
-
-		return tooGeneralTypes.includes(type.uri);
+		return TOO_GENERAL_TYPES.includes(type.uri);
 	}
 
 	/**

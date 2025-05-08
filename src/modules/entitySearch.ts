@@ -27,7 +27,7 @@ import type {
 /**
  * Service for searching entities across knowledge bases
  */
-export class EntitySearchService {
+class EntitySearchService {
 	private dbpediaService: DBpediaService;
 	private wikidataService: WikidataService;
 	private config: EntitySearchConfig;

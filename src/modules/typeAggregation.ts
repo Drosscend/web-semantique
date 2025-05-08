@@ -19,13 +19,13 @@ import type {
 	ColumnTypeAnnotation,
 	TypeCandidate,
 } from "../types";
-import { KNOWN_TYPE_RELATIONSHIPS } from "./columnRelationship";
+import { KNOWN_TYPE_RELATIONSHIPS } from "../dataset/typeRelationshipDataset";
 import { TypeMappingService } from "./typeMapping";
 
 /**
  * Service for aggregating and voting on column types
  */
-export class TypeAggregationService {
+class TypeAggregationService {
 	private config: TypeAggregationConfig;
 
 	/**
@@ -82,9 +82,6 @@ export class TypeAggregationService {
 				columnTypes,
 				columnRelations,
 			);
-
-			// Prioritize Wikidata types
-			this.prioritizeWikidataTypes(adjustedCandidates);
 
 			// Sort by adjusted confidence
 			adjustedCandidates.sort((a, b) => b.confidence - a.confidence);
@@ -178,113 +175,6 @@ export class TypeAggregationService {
 						`Confiance améliorée pour le type "${candidate.type.label}" de ${boost.toFixed(2)} basée sur la relation avec la colonne ${otherColumnIndex}`,
 					);
 				}
-			}
-		}
-	}
-
-	/**
-	 * Ensures only Wikidata types are used, converting DBpedia types to Wikidata if necessary
-	 * @param candidates The type candidates to adjust
-	 */
-	private prioritizeWikidataTypes(candidates: TypeCandidate[]): void {
-		// Check if there are any Wikidata types
-		const wikidataTypes = candidates.filter(
-			(candidate) => candidate.type.source === "Wikidata",
-		);
-
-		// Check if there are any DBpedia types
-		const dbpediaTypes = candidates.filter(
-			(candidate) => candidate.type.source === "DBpedia",
-		);
-
-		// If there are no candidates at all, return
-		if (candidates.length === 0) {
-			return;
-		}
-
-		// If there are Wikidata types, keep only them and remove DBpedia types
-		if (wikidataTypes.length > 0) {
-			// Find the highest confidence Wikidata type
-			const bestWikidataType = wikidataTypes.reduce(
-				(best, current) =>
-					current.confidence > best.confidence ? current : best,
-				wikidataTypes[0],
-			);
-
-			// Remove all non-Wikidata types from the candidates array
-			// We use splice to modify the original array in-place
-			for (let i = candidates.length - 1; i >= 0; i--) {
-				if (candidates[i].type.source !== "Wikidata") {
-					candidates.splice(i, 1);
-				}
-			}
-
-			// Boost the confidence of all remaining Wikidata types
-			for (const candidate of candidates) {
-				// Boost Wikidata types to ensure they are properly prioritized
-				candidate.confidence = Math.min(1.0, candidate.confidence + 0.2);
-			}
-
-			logger.debug(
-				`Utilisation exclusive des types Wikidata pour la colonne. Meilleur type Wikidata: "${bestWikidataType.type.label}" avec une confiance de ${bestWikidataType.confidence.toFixed(2)}`,
-			);
-		}
-		// If there are only DBpedia types, convert them to Wikidata types
-		else if (dbpediaTypes.length > 0) {
-			logger.debug(
-				"Aucun type Wikidata trouvé pour la colonne. Conversion des types DBpedia en types Wikidata.",
-			);
-
-			// Create a TypeMappingService to find Wikidata equivalents
-			const typeMappingService = new TypeMappingService();
-
-			// Create a new array to hold the converted Wikidata types
-			const convertedTypes: TypeCandidate[] = [];
-
-			// Process each DBpedia type
-			for (const dbpediaCandidate of dbpediaTypes) {
-				// Use the TypeMappingService to directly convert DBpedia types to Wikidata types
-				const wikidataTypes = typeMappingService.convertDbpediaTypeToWikidata(
-					dbpediaCandidate.type,
-				);
-
-				if (wikidataTypes.length > 0) {
-					// For each Wikidata type, create a new TypeCandidate
-					for (const wikidataType of wikidataTypes) {
-						convertedTypes.push({
-							type: wikidataType,
-							score: dbpediaCandidate.score,
-							entityMatches: dbpediaCandidate.entityMatches,
-							confidence: dbpediaCandidate.confidence,
-						});
-					}
-				}
-			}
-
-			// If any Wikidata types were found, replace the candidates array with them
-			if (convertedTypes.length > 0) {
-				// Clear the original candidates array
-				candidates.length = 0;
-
-				// Add the converted Wikidata types
-				for (const convertedType of convertedTypes) {
-					candidates.push(convertedType);
-				}
-
-				// Sort by confidence
-				candidates.sort((a, b) => b.confidence - a.confidence);
-
-				logger.debug(
-					`${convertedTypes.length} types Wikidata convertis à partir de types DBpedia.`,
-				);
-			} else {
-				logger.warn(
-					"Impossible de trouver des équivalents Wikidata pour les types DBpedia.",
-				);
-
-				// If no Wikidata types were found through mapping, we don't create placeholder types
-				// Instead, we clear the candidates array as we only want Wikidata types
-				candidates.length = 0;
 			}
 		}
 	}

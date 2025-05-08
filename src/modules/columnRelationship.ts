@@ -19,7 +19,7 @@ import type { TypeRelationship } from "../dataset/typeRelationshipDataset";
 /**
  * Service for analyzing relationships between columns
  */
-export class ColumnRelationshipService {
+class ColumnRelationshipService {
 	private config: ColumnRelationshipConfig;
 	private relationshipIndex = indexRelationships(ALL_TYPE_RELATIONSHIPS);
 

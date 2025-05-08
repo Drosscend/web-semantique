@@ -14,7 +14,7 @@ import type { EntityCandidate } from "../types";
 /**
  * Service for analyzing URIs to improve entity matching
  */
-export class URIAnalysisService {
+class URIAnalysisService {
 	private config: URIAnalysisConfig;
 
 	/**
