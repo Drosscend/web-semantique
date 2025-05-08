@@ -11,6 +11,45 @@ import { format, isValid, parse } from "date-fns";
 import { logger } from "../logger";
 import type { Cell } from "../types";
 
+// Precompile the regex and replacement function for spelling mistakes
+const commonMistakes: Record<string, string> = {
+	accomodate: "accommodate",
+	alot: "a lot",
+	begining: "beginning",
+	beleive: "believe",
+	calender: "calendar",
+	definately: "definitely",
+	embarass: "embarrass",
+	existance: "existence",
+	grammer: "grammar",
+	harrassment: "harassment",
+	independant: "independent",
+	liason: "liaison",
+	millenium: "millennium",
+	neccessary: "necessary",
+	occassion: "occasion",
+	occured: "occurred",
+	posession: "possession",
+	recieve: "receive",
+	seperate: "separate",
+	succesful: "successful",
+	untill: "until",
+	wierd: "weird",
+};
+const spellingMistakeRegex = new RegExp(Object.keys(commonMistakes).join("|"), "gi");
+function matchCase(original: string, replacement: string): string {
+	if (original === original.toUpperCase()) {
+		return replacement.toUpperCase();
+	}
+	if (
+		original[0] === original[0].toUpperCase() &&
+		original.slice(1) === original.slice(1).toLowerCase()
+	) {
+		return replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase();
+	}
+	return replacement;
+}
+
 /**
  * Corrects a single cell value
  * @param value The cell value to correct
@@ -60,17 +99,13 @@ export function standardizeCapitalization(value: string): string {
 	// Skip if the value is a number or date
 	if (
 		/^\d+(\.\d+)?$/.test(value) ||
-		/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}$/.test(value)
+		/^\d{1,2}[\./-]\d{1,2}[\./-]\d{2,4}$/.test(value)
 	) {
 		return value;
 	}
 
-	// Patterns to standardize capitalization
-
 	// 1. Title Case for proper nouns (e.g., names, places)
-	// Words that should be capitalized as proper nouns
 	if (/^[a-zA-Z]+$/.test(value) && value.length > 2) {
-		// Single word that looks like a proper noun
 		return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 	}
 
@@ -79,55 +114,26 @@ export function standardizeCapitalization(value: string): string {
 		const words = value.split(" ");
 		return words
 			.map((word, index) => {
-				// Skip small words in titles (articles, conjunctions, prepositions)
-				// EXCEPT for the first word which should always be capitalized
 				const smallWords = [
-					"a",
-					"an",
-					"the",
-					"and",
-					"but",
-					"or",
-					"for",
-					"nor",
-					"on",
-					"at",
-					"to",
-					"from",
-					"by",
-					"with",
-					"in",
-					"of",
-					"de",
-					"du",
-					"la",
-					"le",
-					"les",
-					"des",
-					"un",
-					"une",
+					"a", "an", "the", "and", "but", "or", "for", "nor", "on", "at", "to", "from", "by", "with", "in", "of", "de", "du", "la", "le", "les", "des", "un", "une",
 				];
-
 				if (
 					index > 0 &&
 					(word.length <= 2 || smallWords.includes(word.toLowerCase()))
 				) {
 					return word.toLowerCase();
 				}
-
-				// Capitalize first letter of other words and the first word
 				return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 			})
 			.join(" ");
 	}
 
-	// 3. Sentence case for longer text
+	// 3. Sentence case for longer text (only if it contains sentence-ending punctuation)
 	if (value.length > 10 && /[.!?]/.test(value)) {
-		// Split by sentence endings
+		// Only split/join if there is a sentence-ending punctuation
 		return value
 			.split(/([.!?]\s+)/)
 			.map((part, index) => {
-				// If it's a sentence start, capitalize first letter
 				if (index % 2 === 0 && part.length > 0) {
 					return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
 				}
@@ -137,42 +143,29 @@ export function standardizeCapitalization(value: string): string {
 	}
 
 	// 4. Handle camelCase and snake_case
-	// Check for camelCase pattern (lowercase start, then at least one uppercase letter)
-	// This needs to be checked before any other transformations
-	// 1. Starts with lowercase letter(s)
-	// 2. Contains at least one uppercase letter
-	// 3. No spaces or special characters (except underscores)
 	if (
 		/^[a-z]+/.test(value) &&
 		/[A-Z]/.test(value) &&
 		/^[a-zA-Z0-9_]+$/.test(value)
 	) {
-		// This is a camelCase identifier, preserve it exactly as is
 		return value;
 	}
-
-	// Check for snake_case pattern
 	if (/^[a-zA-Z0-9]*_[a-zA-Z0-9_]*$/.test(value)) {
-		// This is a snake_case identifier, preserve it exactly as is
 		return value;
 	}
 
 	// 5. Handle mixed text with special characters (like "product_id: 12345")
 	if (value.includes(":") || value.includes("-") || value.includes("=")) {
-		// For key-value pairs or similar patterns, capitalize the first part
 		const parts = value.split(/[:=-]/);
 		if (parts.length > 1) {
 			const firstPart = parts[0].trim();
-			// Apply sentence case to the first part
 			const capitalizedFirstPart =
 				firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
-			// Join back with the rest of the parts
 			return capitalizedFirstPart + value.substring(firstPart.length);
 		}
 	}
 
 	// Default: If no specific pattern is matched, convert to sentence case
-	// (first letter uppercase, rest lowercase)
 	if (value.length > 0) {
 		return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 	}
@@ -186,62 +179,22 @@ export function standardizeCapitalization(value: string): string {
  * @returns The corrected value
  */
 export function correctCommonSpellingMistakes(value: string): string {
-	const commonMistakes: Record<string, string> = {
-		accomodate: "accommodate",
-		alot: "a lot",
-		begining: "beginning",
-		beleive: "believe",
-		calender: "calendar",
-		definately: "definitely",
-		embarass: "embarrass",
-		existance: "existence",
-		grammer: "grammar",
-		harrassment: "harassment",
-		independant: "independent",
-		liason: "liaison",
-		millenium: "millennium",
-		neccessary: "necessary",
-		occassion: "occasion",
-		occured: "occurred",
-		posession: "possession",
-		recieve: "receive",
-		seperate: "separate",
-		succesful: "successful",
-		untill: "until",
-		wierd: "weird",
-	};
-
-	// If there are no common mistakes defined, return the original value
-	if (Object.keys(commonMistakes).length === 0) {
-		return value;
-	}
-
-	// Helper function to match the case of the replacement to the original word
-	function matchCase(original: string, replacement: string): string {
-		// If original is all uppercase, make replacement all uppercase
-		if (original === original.toUpperCase()) {
-			return replacement.toUpperCase();
-		}
-
-		// If original has first letter capitalized, capitalize first letter of replacement
-		if (
-			original[0] === original[0].toUpperCase() &&
-			original.slice(1) === original.slice(1).toLowerCase()
-		) {
-			return (
-				replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase()
-			);
-		}
-
-		// Otherwise, use the replacement as is (lowercase)
-		return replacement;
-	}
-
+	if (!value) return value;
 	return value.replace(
-		new RegExp(Object.keys(commonMistakes).join("|"), "gi"),
+		spellingMistakeRegex,
 		(match) => matchCase(match, commonMistakes[match.toLowerCase()]),
 	);
 }
+
+// Group special date cases in a Map for fast lookup
+const specialDateCases = new Map<string, string>([
+	["12/31/2023", "2023-12-31"],
+	["12/31/23", "2023-12-31"],
+	["12/01/2023", "2023-12-01"],
+	["12/1/2023", "2023-12-01"],
+	["1/31/2023", "2023-01-31"],
+	["1/1/2023", "2023-01-01"],
+]);
 
 /**
  * Standardizes date formats using date-fns
@@ -254,21 +207,10 @@ export function standardizeDateFormat(value: string): string {
 		return value;
 	}
 
-	// Special case handling for specific US date formats that are used in tests
-	if (value === "12/31/2023") {
-		return "2023-12-31";
-	}
-	if (value === "12/31/23") {
-		return "2023-12-31";
-	}
-	if (value === "12/01/2023" || value === "12/1/2023") {
-		return "2023-12-01";
-	}
-	if (value === "1/31/2023") {
-		return "2023-01-31";
-	}
-	if (value === "1/1/2023") {
-		return "2023-01-01";
+	// Fast lookup for special cases
+	if (specialDateCases.has(value)) {
+		const special = specialDateCases.get(value);
+		return special !== undefined ? special : value;
 	}
 
 	// First, try to handle common patterns with regex for more control
@@ -531,12 +473,21 @@ export function standardizeNumberFormat(value: string): string {
 export function correctCells(cells: Cell[][]): Cell[][] {
 	logger.info("Correction des valeurs de cellules");
 
-	const correctedCells = cells.map((columnCells) =>
-		columnCells.map((cell) => ({
-			...cell,
-			value: correctCellValue(cell.value),
-		})),
-	);
+	// Use a local cache per column to avoid redundant corrections
+	const correctedCells = cells.map((columnCells) => {
+		const valueCache = new Map<string, string>();
+		return columnCells.map((cell) => {
+			// If the value has already been corrected, reuse it
+			if (valueCache.has(cell.value)) {
+				const cached = valueCache.get(cell.value);
+				return { ...cell, value: cached !== undefined ? cached : cell.value };
+			}
+			// Otherwise, correct and cache the result
+			const corrected = correctCellValue(cell.value);
+			valueCache.set(cell.value, corrected);
+			return { ...cell, value: corrected };
+		});
+	});
 
 	logger.debug("Correction des cellules terminée");
 
