@@ -242,7 +242,7 @@ export interface EntitySearchConfig {
 	 * Impact:
 	 * - Higher values skip more short/ambiguous values
 	 * - Lower values include more values but may increase noise
-	 * - Recommended: 2 or 3
+	 * - Recommended: 1 or 2
 	 */
 	minLength: number;
 
@@ -331,7 +331,7 @@ export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 	/**
 	 * Minimum length of a cell value to consider for entity search
 	 */
-	minLength: 2,
+	minLength: 1,
 
 	/**
 	 * Confidence threshold below which cross-source lookup is triggered

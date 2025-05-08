@@ -15,7 +15,6 @@ import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type { EntityCandidate, SemanticType, TypeCandidate } from "../types";
-import { TOO_GENERAL_TYPES } from "../dataset/tooGeneralTypes";
 import { TypeMappingService } from "./typeMapping";
 
 /**
@@ -104,7 +103,9 @@ class TypeExtractionService {
 
 		// Log each extracted type with score and confidence
 		for (const type of filteredTypes) {
-			logger.debug(`Type extrait: ${type.type.uri} (label: ${type.type.label}), score: ${type.score.toFixed(2)}, confiance: ${type.confidence.toFixed(2)}, entityMatches: ${type.entityMatches}`);
+			logger.debug(
+				`Type extrait: ${type.type.uri} (label: ${type.type.label}), score: ${type.score.toFixed(2)}, confiance: ${type.confidence.toFixed(2)}, entityMatches: ${type.entityMatches}`,
+			);
 		}
 		if (filteredTypes.length === 0) {
 			logger.info("Aucun type extrait pour cette colonne (après filtrage)");
@@ -117,21 +118,21 @@ class TypeExtractionService {
 
 		// Process Wikidata types first
 		const wikidataTypes = filteredTypes.filter(
-			(candidate) => candidate.type.source === "Wikidata"
+			(candidate) => candidate.type.source === "Wikidata",
 		);
-		
+
 		if (wikidataTypes.length > 0) {
 			logger.debug(
-				`Found ${wikidataTypes.length} direct Wikidata types for column`
+				`Found ${wikidataTypes.length} direct Wikidata types for column`,
 			);
-			
+
 			for (const candidate of wikidataTypes) {
 				const confidenceBoost = Math.min(0.3, 0.2 * candidate.confidence + 0.1);
 				const adjustedCandidate = {
 					...candidate,
-					confidence: Math.min(1.0, candidate.confidence + confidenceBoost)
+					confidence: Math.min(1.0, candidate.confidence + confidenceBoost),
 				};
-				
+
 				prioritizedTypes.push(adjustedCandidate);
 				typeUriSet.add(candidate.type.uri);
 			}
@@ -139,17 +140,20 @@ class TypeExtractionService {
 
 		// Then convert DBpedia types to Wikidata
 		const dbpediaTypes = filteredTypes.filter(
-			(candidate) => candidate.type.source === "DBpedia"
+			(candidate) => candidate.type.source === "DBpedia",
 		);
-		
+
 		if (dbpediaTypes.length > 0) {
 			logger.debug(
-				`Attempting to convert ${dbpediaTypes.length} DBpedia types to Wikidata`
+				`Attempting to convert ${dbpediaTypes.length} DBpedia types to Wikidata`,
 			);
-			
+
 			for (const dbpediaCandidate of dbpediaTypes) {
-				const wikidataEquivalents = typeMappingService.convertDbpediaTypeToWikidata(dbpediaCandidate.type);
-				
+				const wikidataEquivalents =
+					typeMappingService.convertDbpediaTypeToWikidata(
+						dbpediaCandidate.type,
+					);
+
 				if (wikidataEquivalents.length > 0) {
 					for (const wikidataType of wikidataEquivalents) {
 						if (!typeUriSet.has(wikidataType.uri)) {
@@ -157,9 +161,9 @@ class TypeExtractionService {
 								type: wikidataType,
 								score: dbpediaCandidate.score,
 								entityMatches: dbpediaCandidate.entityMatches,
-								confidence: dbpediaCandidate.confidence
+								confidence: dbpediaCandidate.confidence,
 							};
-							
+
 							prioritizedTypes.push(convertedCandidate);
 							typeUriSet.add(wikidataType.uri);
 						}
@@ -171,7 +175,7 @@ class TypeExtractionService {
 		// Fallback to original types if no Wikidata types found
 		if (prioritizedTypes.length === 0) {
 			logger.warn(
-				"No Wikidata types (direct or converted) found for this column. Using original types."
+				"No Wikidata types (direct or converted) found for this column. Using original types.",
 			);
 			return filteredTypes;
 		}
@@ -180,11 +184,11 @@ class TypeExtractionService {
 		const finalTypes = prioritizedTypes
 			.sort((a, b) => b.confidence - a.confidence)
 			.slice(0, this.config.maxTypesPerColumn);
-			
+
 		logger.info(
-			`${finalTypes.length} final Wikidata types for column: ${finalTypes.map(t => t.type.label).join(", ")}`
+			`${finalTypes.length} final Wikidata types for column: ${finalTypes.map((t) => t.type.label).join(", ")}`,
 		);
-			
+
 		return finalTypes;
 	}
 
@@ -226,12 +230,6 @@ class TypeExtractionService {
 
 		// Process each type
 		for (const type of types) {
-			// Skip too general types
-			if (this.isTooGeneral(type)) {
-				logger.info(`Type ${type.uri} ignoré car trop général`);
-				continue;
-			}
-
 			// Add or update the type score
 			const key = type.uri;
 			if (!typeScores.has(key)) {
@@ -325,15 +323,6 @@ class TypeExtractionService {
 				`Erreur lors de la récupération des types parents pour ${type.uri} : ${error instanceof Error ? error.message : String(error)}`,
 			);
 		}
-	}
-
-	/**
-	 * Checks if a type is too general to be useful
-	 * @param type The type to check
-	 * @returns True if the type is too general
-	 */
-	private isTooGeneral(type: SemanticType): boolean {
-		return TOO_GENERAL_TYPES.includes(type.uri);
 	}
 
 	/**

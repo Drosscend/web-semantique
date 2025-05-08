@@ -52,7 +52,10 @@ class URIAnalysisService {
 			// For each candidate in the current column
 			for (let j = 0; j < currentColumn.length; j++) {
 				const candidate = currentColumn[j];
-				if (!candidate.entity?.uri || typeof candidate.entity.uri !== "string") {
+				if (
+					!candidate.entity?.uri ||
+					typeof candidate.entity.uri !== "string"
+				) {
 					continue;
 				}
 				const uri = candidate.entity.uri.toLowerCase();

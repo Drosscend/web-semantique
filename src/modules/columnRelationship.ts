@@ -13,7 +13,11 @@ import {
 } from "../config";
 import { logger } from "../logger";
 import type { ColumnRelation, EntityCandidate, SemanticType } from "../types";
-import { KNOWN_TYPE_RELATIONSHIPS, ALL_TYPE_RELATIONSHIPS, indexRelationships } from "../dataset/typeRelationshipDataset";
+import {
+	KNOWN_TYPE_RELATIONSHIPS,
+	ALL_TYPE_RELATIONSHIPS,
+	indexRelationships,
+} from "../dataset/typeRelationshipDataset";
 import type { TypeRelationship } from "../dataset/typeRelationshipDataset";
 
 /**
@@ -155,7 +159,7 @@ class ColumnRelationshipService {
 						confidence,
 					});
 					logger.debug(
-						`Relation found: ${sourceType.uri} -> ${targetType.uri} (${relation.relationName}), confidence: ${confidence.toFixed(2)}`
+						`Relation found: ${sourceType.uri} -> ${targetType.uri} (${relation.relationName}), confidence: ${confidence.toFixed(2)}`,
 					);
 				}
 			}
@@ -163,7 +167,7 @@ class ColumnRelationshipService {
 
 		if (foundRelations.length === 0) {
 			logger.info(
-				`No relation found between types for columns (source: ${sourceTypes.map(t => t.uri).join(", ")}, target: ${targetTypes.map(t => t.uri).join(", ")})`
+				`No relation found between types for columns (source: ${sourceTypes.map((t) => t.uri).join(", ")}, target: ${targetTypes.map((t) => t.uri).join(", ")})`,
 			);
 		}
 

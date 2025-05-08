@@ -36,7 +36,10 @@ const commonMistakes: Record<string, string> = {
 	untill: "until",
 	wierd: "weird",
 };
-const spellingMistakeRegex = new RegExp(Object.keys(commonMistakes).join("|"), "gi");
+const spellingMistakeRegex = new RegExp(
+	Object.keys(commonMistakes).join("|"),
+	"gi",
+);
 function matchCase(original: string, replacement: string): string {
 	if (original === original.toUpperCase()) {
 		return replacement.toUpperCase();
@@ -45,7 +48,9 @@ function matchCase(original: string, replacement: string): string {
 		original[0] === original[0].toUpperCase() &&
 		original.slice(1) === original.slice(1).toLowerCase()
 	) {
-		return replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase();
+		return (
+			replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase()
+		);
 	}
 	return replacement;
 }
@@ -115,7 +120,30 @@ export function standardizeCapitalization(value: string): string {
 		return words
 			.map((word, index) => {
 				const smallWords = [
-					"a", "an", "the", "and", "but", "or", "for", "nor", "on", "at", "to", "from", "by", "with", "in", "of", "de", "du", "la", "le", "les", "des", "un", "une",
+					"a",
+					"an",
+					"the",
+					"and",
+					"but",
+					"or",
+					"for",
+					"nor",
+					"on",
+					"at",
+					"to",
+					"from",
+					"by",
+					"with",
+					"in",
+					"of",
+					"de",
+					"du",
+					"la",
+					"le",
+					"les",
+					"des",
+					"un",
+					"une",
 				];
 				if (
 					index > 0 &&
@@ -180,9 +208,8 @@ export function standardizeCapitalization(value: string): string {
  */
 export function correctCommonSpellingMistakes(value: string): string {
 	if (!value) return value;
-	return value.replace(
-		spellingMistakeRegex,
-		(match) => matchCase(match, commonMistakes[match.toLowerCase()]),
+	return value.replace(spellingMistakeRegex, (match) =>
+		matchCase(match, commonMistakes[match.toLowerCase()]),
 	);
 }
 

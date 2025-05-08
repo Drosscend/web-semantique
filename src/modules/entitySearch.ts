@@ -69,16 +69,22 @@ class EntitySearchService {
 	}
 
 	// Helper: retry a promise-returning function with exponential backoff
-	private async retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, baseDelay = 300): Promise<T> {
+	private async retryWithBackoff<T>(
+		fn: () => Promise<T>,
+		maxRetries = 3,
+		baseDelay = 300,
+	): Promise<T> {
 		let attempt = 0;
 		while (true) {
 			try {
 				return await fn();
 			} catch (err) {
 				if (attempt >= maxRetries) throw err;
-				const delay = baseDelay * (2 ** attempt);
-				logger.warn(`Erreur réseau, tentative ${attempt + 1}/${maxRetries}, nouvel essai dans ${delay}ms`);
-				await new Promise(res => setTimeout(res, delay));
+				const delay = baseDelay * 2 ** attempt;
+				logger.warn(
+					`Erreur réseau, tentative ${attempt + 1}/${maxRetries}, nouvel essai dans ${delay}ms`,
+				);
+				await new Promise((res) => setTimeout(res, delay));
 				attempt++;
 			}
 		}
@@ -93,7 +99,7 @@ class EntitySearchService {
 		const query = cell.value;
 
 		// Pre-filter: skip empty, '0', or '-'
-		if (!query.trim() || query.trim() === '0' || query.trim() === '-') {
+		if (!query.trim() || query.trim() === "0" || query.trim() === "-") {
 			logger.debug(
 				`Cellule ignorée (vide, '0' ou '-') à [${cell.rowIndex}, ${cell.columnIndex}]`,
 			);
@@ -108,9 +114,11 @@ class EntitySearchService {
 
 		// Check the local cache before searching
 		if (this.entitySearchCache.has(query)) {
-			logger.debug(`Résultat de recherche d'entité réutilisé depuis le cache local pour "${query}"`);
+			logger.debug(
+				`Résultat de recherche d'entité réutilisé depuis le cache local pour "${query}"`,
+			);
 			const cached = this.entitySearchCache.get(query);
-			return cached ? cached.map(c => ({ ...c, cell })) : [];
+			return cached ? cached.map((c) => ({ ...c, cell })) : [];
 		}
 
 		logger.debug(
@@ -123,7 +131,9 @@ class EntitySearchService {
 				? this.retryWithBackoff(() => this.dbpediaService.searchEntities(query))
 				: Promise.resolve([]),
 			this.config.useWikidata
-				? this.retryWithBackoff(() => this.wikidataService.searchEntities(query, this.config.language))
+				? this.retryWithBackoff(() =>
+						this.wikidataService.searchEntities(query, this.config.language),
+					)
 				: Promise.resolve([]),
 		]);
 
@@ -145,25 +155,37 @@ class EntitySearchService {
 
 				// Get types from the entity's original source (with retry)
 				if (entity.source === "DBpedia") {
-					dbpediaTypes = await this.retryWithBackoff(() => this.dbpediaService.getEntityTypes(entity.uri));
+					dbpediaTypes = await this.retryWithBackoff(() =>
+						this.dbpediaService.getEntityTypes(entity.uri),
+					);
 				} else {
-					wikidataTypes = await this.retryWithBackoff(() => this.wikidataService.getEntityTypes(entity.uri));
+					wikidataTypes = await this.retryWithBackoff(() =>
+						this.wikidataService.getEntityTypes(entity.uri),
+					);
 				}
 
 				// Only perform cross-source lookup if no types found or confidence is low
 				const crossSourceThreshold = this.config.crossSourceConfidenceThreshold;
-				const needCrossSource = (dbpediaTypes.length + wikidataTypes.length === 0) || entity.confidence < crossSourceThreshold;
+				const needCrossSource =
+					dbpediaTypes.length + wikidataTypes.length === 0 ||
+					entity.confidence < crossSourceThreshold;
 				if (needCrossSource) {
 					try {
 						if (entity.source === "DBpedia") {
 							const resourceName = entity.uri.split("/").pop();
 							if (resourceName) {
 								const wikidataEntities = await this.retryWithBackoff(() =>
-									this.wikidataService.searchEntities(resourceName.replace(/_/g, " "), this.config.language, 1)
+									this.wikidataService.searchEntities(
+										resourceName.replace(/_/g, " "),
+										this.config.language,
+										1,
+									),
 								);
 								if (wikidataEntities.length > 0) {
 									wikidataTypes = await this.retryWithBackoff(() =>
-										this.wikidataService.getEntityTypes(wikidataEntities[0].uri)
+										this.wikidataService.getEntityTypes(
+											wikidataEntities[0].uri,
+										),
 									);
 								}
 							}
@@ -171,11 +193,11 @@ class EntitySearchService {
 							const entityId = entity.uri.split("/").pop();
 							if (entityId) {
 								const dbpediaEntities = await this.retryWithBackoff(() =>
-									this.dbpediaService.searchEntities(entity.label, 1)
+									this.dbpediaService.searchEntities(entity.label, 1),
 								);
 								if (dbpediaEntities.length > 0) {
 									dbpediaTypes = await this.retryWithBackoff(() =>
-										this.dbpediaService.getEntityTypes(dbpediaEntities[0].uri)
+										this.dbpediaService.getEntityTypes(dbpediaEntities[0].uri),
 									);
 								}
 							}
@@ -221,7 +243,7 @@ class EntitySearchService {
 		columnCells: Cell[],
 	): Promise<EntityCandidate[]> {
 		logger.info(
-			`Recherche d'entités pour la colonne avec ${columnCells.length} cellules`,
+			`Recherche d'entités pour la colonne ${columnCells[0].columnIndex} avec ${columnCells.length} cellules`,
 		);
 
 		const candidates: EntityCandidate[] = [];

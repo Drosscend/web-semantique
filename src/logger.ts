@@ -3,7 +3,7 @@ import { format, intervalToDuration } from "date-fns";
 
 // Create a custom consola instance with both console and file reporters
 export const logger = createConsola({
-	level: 1, // Level 1 for important information (processing time, files processed, results)
+	level: 1,
 	// @ts-ignore - the type is correct
 	fancy: true,
 	formatOptions: {

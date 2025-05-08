@@ -70,11 +70,14 @@ class TypeAggregationService {
 			}
 
 			// Compute frequency of each type URI
-			const freqMap = new Map<string, {candidate: TypeCandidate, count: number}>();
+			const freqMap = new Map<
+				string,
+				{ candidate: TypeCandidate; count: number }
+			>();
 			for (const candidate of typeCandidates) {
 				const key = candidate.type.uri;
 				if (!freqMap.has(key)) {
-					freqMap.set(key, {candidate, count: 0});
+					freqMap.set(key, { candidate, count: 0 });
 				}
 				const entry = freqMap.get(key);
 				if (entry) entry.count++;
@@ -83,7 +86,7 @@ class TypeAggregationService {
 			// Find the type(s) with the highest frequency
 			let maxFreq = 0;
 			let bestType: TypeCandidate | null = null;
-			for (const {candidate, count} of freqMap.values()) {
+			for (const { candidate, count } of freqMap.values()) {
 				if (count > maxFreq) {
 					maxFreq = count;
 					bestType = candidate;
@@ -97,9 +100,13 @@ class TypeAggregationService {
 
 			// Build alternatives (other types, sorted by frequency then confidence)
 			const alternativeTypes = Array.from(freqMap.values())
-				.filter(({candidate}) => candidate.type.uri !== bestType.type.uri)
-				.sort((a, b) => b.count - a.count || b.candidate.confidence - a.candidate.confidence)
-				.map(({candidate}) => candidate);
+				.filter(({ candidate }) => candidate.type.uri !== bestType.type.uri)
+				.sort(
+					(a, b) =>
+						b.count - a.count ||
+						b.candidate.confidence - a.candidate.confidence,
+				)
+				.map(({ candidate }) => candidate);
 
 			const annotation: ColumnTypeAnnotation = {
 				columnIndex: i,
