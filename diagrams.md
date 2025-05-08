@@ -43,6 +43,7 @@ note right of DataCorrection : Retourne des cellules standardisées pour amélio
 ' Étape 3: Recherche d'entités
 CTAAlgorithm -> EntitySearch : searchEntities(correctedCells, config)
 note right of CTAAlgorithm : Recherche d'entités correspondantes dans les bases de connaissances
+note right of EntitySearch : Pré-filtrage des valeurs vides, '0', '-'. Recherche croisée uniquement si aucun type ou confiance < seuil configuré
 
 ' Recherche dans Wikidata
 EntitySearch -> WikidataService : searchEntities(cellValue)

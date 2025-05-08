@@ -205,6 +205,56 @@ export interface EntitySearchConfig {
 	 * Language code for entity search (e.g., "en", "fr")
 	 */
 	language: string;
+
+	/**
+	 * Batch size for entity search (number of cells processed in parallel)
+	 *
+	 * Impact:
+	 * - Higher values increase parallelism but may overload APIs
+	 * - Lower values are safer for public endpoints
+	 * - Recommended: 5 for public APIs, higher for local/mirrored endpoints
+	 */
+	batchSize: number;
+
+	/**
+	 * Delay (in ms) between batches of entity search
+	 *
+	 * Impact:
+	 * - Higher values reduce API load but slow down processing
+	 * - Lower values speed up processing but may risk rate limiting
+	 * - Recommended: 500ms for public APIs
+	 */
+	batchDelay: number;
+
+	/**
+	 * Delay (in ms) between processing columns
+	 *
+	 * Impact:
+	 * - Higher values reduce API load but slow down processing
+	 * - Lower values speed up processing but may risk rate limiting
+	 * - Recommended: 1000ms for public APIs
+	 */
+	columnDelay: number;
+
+	/**
+	 * Minimum length of a cell value to consider for entity search
+	 *
+	 * Impact:
+	 * - Higher values skip more short/ambiguous values
+	 * - Lower values include more values but may increase noise
+	 * - Recommended: 2 or 3
+	 */
+	minLength: number;
+
+	/**
+	 * Confidence threshold below which cross-source lookup is triggered
+	 *
+	 * Impact:
+	 * - Lower values trigger cross-source lookup more often
+	 * - Higher values only trigger when confidence is very low
+	 * - Recommended: 0.7
+	 */
+	crossSourceConfidenceThreshold: number;
 }
 
 /**
@@ -262,6 +312,31 @@ export const DEFAULT_ENTITY_SEARCH_CONFIG: EntitySearchConfig = {
 	 * - Using "en" provides the broadest coverage in most knowledge bases
 	 */
 	language: "en",
+
+	/**
+	 * Batch size for entity search (number of cells processed in parallel)
+	 */
+	batchSize: 5,
+
+	/**
+	 * Delay (in ms) between batches of entity search
+	 */
+	batchDelay: 500,
+
+	/**
+	 * Delay (in ms) between processing columns
+	 */
+	columnDelay: 1000,
+
+	/**
+	 * Minimum length of a cell value to consider for entity search
+	 */
+	minLength: 2,
+
+	/**
+	 * Confidence threshold below which cross-source lookup is triggered
+	 */
+	crossSourceConfidenceThreshold: 0.7,
 };
 
 /**

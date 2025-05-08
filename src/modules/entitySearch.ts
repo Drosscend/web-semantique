@@ -32,6 +32,15 @@ export class EntitySearchService {
 	private wikidataService: WikidataService;
 	private config: EntitySearchConfig;
 
+	// Local cache to avoid redundant entity searches for the same cell value
+	private entitySearchCache: Map<string, EntityCandidate[]> = new Map();
+
+	// Configurable batch and delay settings
+	private batchSize: number;
+	private batchDelay: number;
+	private columnDelay: number;
+	private minLength: number;
+
 	/**
 	 * Creates a new entity search service
 	 * @param config Optional configuration
@@ -47,10 +56,32 @@ export class EntitySearchService {
 		this.dbpediaService = dbpediaService || new DBpediaService();
 		this.wikidataService = wikidataService || new WikidataService();
 
+		// Set batch and delay settings (all required in config)
+		this.batchSize = this.config.batchSize;
+		this.batchDelay = this.config.batchDelay;
+		this.columnDelay = this.config.columnDelay;
+		this.minLength = this.config.minLength;
+
 		logger.debug(
 			"Service de recherche d'entités initialisé avec la configuration :",
 			this.config,
 		);
+	}
+
+	// Helper: retry a promise-returning function with exponential backoff
+	private async retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, baseDelay = 300): Promise<T> {
+		let attempt = 0;
+		while (true) {
+			try {
+				return await fn();
+			} catch (err) {
+				if (attempt >= maxRetries) throw err;
+				const delay = baseDelay * (2 ** attempt);
+				logger.warn(`Erreur réseau, tentative ${attempt + 1}/${maxRetries}, nouvel essai dans ${delay}ms`);
+				await new Promise(res => setTimeout(res, delay));
+				attempt++;
+			}
+		}
 	}
 
 	/**
@@ -61,99 +92,101 @@ export class EntitySearchService {
 	async searchEntitiesForCell(cell: Cell): Promise<EntityCandidate[]> {
 		const query = cell.value;
 
-		if (!query.trim()) {
+		// Pre-filter: skip empty, '0', or '-'
+		if (!query.trim() || query.trim() === '0' || query.trim() === '-') {
 			logger.debug(
-				`Cellule vide ignorée à [${cell.rowIndex}, ${cell.columnIndex}]`,
+				`Cellule ignorée (vide, '0' ou '-') à [${cell.rowIndex}, ${cell.columnIndex}]`,
 			);
 			return [];
+		}
+		if (query.length < this.minLength) {
+			logger.debug(
+				`Cellule ignorée (trop courte) à [${cell.rowIndex}, ${cell.columnIndex}] : "${query}"`,
+			);
+			return [];
+		}
+
+		// Check the local cache before searching
+		if (this.entitySearchCache.has(query)) {
+			logger.debug(`Résultat de recherche d'entité réutilisé depuis le cache local pour "${query}"`);
+			const cached = this.entitySearchCache.get(query);
+			return cached ? cached.map(c => ({ ...c, cell })) : [];
 		}
 
 		logger.debug(
 			`Recherche d'entités pour la cellule : "${query}" [${cell.rowIndex}, ${cell.columnIndex}]`,
 		);
 
-		// Search in both knowledge bases in parallel
+		// Search in both knowledge bases in parallel, with retry/backoff
 		const [dbpediaEntities, wikidataEntities] = await Promise.all([
 			this.config.useDBpedia
-				? this.dbpediaService.searchEntities(query)
+				? this.retryWithBackoff(() => this.dbpediaService.searchEntities(query))
 				: Promise.resolve([]),
 			this.config.useWikidata
-				? this.wikidataService.searchEntities(query, this.config.language)
+				? this.retryWithBackoff(() => this.wikidataService.searchEntities(query, this.config.language))
 				: Promise.resolve([]),
 		]);
 
-		// Combine and rank the results
 		const rankedEntities = this.rankEntities(
 			[...dbpediaEntities, ...wikidataEntities],
 			query,
 		);
 
-		// Filter by minimum confidence and maximum entities per cell
 		const filteredEntities = rankedEntities
 			.filter((entity) => entity.confidence >= this.config.minConfidence)
 			.slice(0, this.config.maxEntitiesPerCell);
 
-		// Create entity candidates
 		const candidates: EntityCandidate[] = [];
 
 		for (const entity of filteredEntities) {
 			try {
-				// Get entity types from both sources
 				let dbpediaTypes: SemanticType[] = [];
 				let wikidataTypes: SemanticType[] = [];
 
-				// Get types from the entity's original source
+				// Get types from the entity's original source (with retry)
 				if (entity.source === "DBpedia") {
-					dbpediaTypes = await this.dbpediaService.getEntityTypes(entity.uri);
+					dbpediaTypes = await this.retryWithBackoff(() => this.dbpediaService.getEntityTypes(entity.uri));
 				} else {
-					wikidataTypes = await this.wikidataService.getEntityTypes(entity.uri);
+					wikidataTypes = await this.retryWithBackoff(() => this.wikidataService.getEntityTypes(entity.uri));
 				}
 
-				// Try to get types from the other source if possible
-				try {
-					// For DBpedia entities, try to find equivalent in Wikidata
-					if (entity.source === "DBpedia") {
-						// Extract the resource name from DBpedia URI
-						const resourceName = entity.uri.split("/").pop();
-						if (resourceName) {
-							// Try to find the entity in Wikidata by label
-							const wikidataEntities =
-								await this.wikidataService.searchEntities(
-									resourceName.replace(/_/g, " "),
-									this.config.language,
-									1,
+				// Only perform cross-source lookup if no types found or confidence is low
+				const crossSourceThreshold = this.config.crossSourceConfidenceThreshold;
+				const needCrossSource = (dbpediaTypes.length + wikidataTypes.length === 0) || entity.confidence < crossSourceThreshold;
+				if (needCrossSource) {
+					try {
+						if (entity.source === "DBpedia") {
+							const resourceName = entity.uri.split("/").pop();
+							if (resourceName) {
+								const wikidataEntities = await this.retryWithBackoff(() =>
+									this.wikidataService.searchEntities(resourceName.replace(/_/g, " "), this.config.language, 1)
 								);
-							if (wikidataEntities.length > 0) {
-								wikidataTypes = await this.wikidataService.getEntityTypes(
-									wikidataEntities[0].uri,
+								if (wikidataEntities.length > 0) {
+									wikidataTypes = await this.retryWithBackoff(() =>
+										this.wikidataService.getEntityTypes(wikidataEntities[0].uri)
+									);
+								}
+							}
+						} else {
+							const entityId = entity.uri.split("/").pop();
+							if (entityId) {
+								const dbpediaEntities = await this.retryWithBackoff(() =>
+									this.dbpediaService.searchEntities(entity.label, 1)
 								);
+								if (dbpediaEntities.length > 0) {
+									dbpediaTypes = await this.retryWithBackoff(() =>
+										this.dbpediaService.getEntityTypes(dbpediaEntities[0].uri)
+									);
+								}
 							}
 						}
+					} catch (crossSourceError) {
+						logger.debug(
+							`Impossible de récupérer les types de l'autre source pour l'entité ${entity.uri}: ${crossSourceError instanceof Error ? crossSourceError.message : String(crossSourceError)}`,
+						);
 					}
-					// For Wikidata entities, try to find equivalent in DBpedia
-					else {
-						// Extract the entity ID from Wikidata URI
-						const entityId = entity.uri.split("/").pop();
-						if (entityId) {
-							// Try to find the entity in DBpedia by label
-							const dbpediaEntities = await this.dbpediaService.searchEntities(
-								entity.label,
-								1,
-							);
-							if (dbpediaEntities.length > 0) {
-								dbpediaTypes = await this.dbpediaService.getEntityTypes(
-									dbpediaEntities[0].uri,
-								);
-							}
-						}
-					}
-				} catch (crossSourceError) {
-					logger.debug(
-						`Impossible de récupérer les types de l'autre source pour l'entité ${entity.uri}: ${crossSourceError instanceof Error ? crossSourceError.message : String(crossSourceError)}`,
-					);
 				}
 
-				// Combine types from both sources
 				const combinedTypes = [...dbpediaTypes, ...wikidataTypes];
 
 				if (combinedTypes.length > 0) {
@@ -170,6 +203,8 @@ export class EntitySearchService {
 				);
 			}
 		}
+
+		this.entitySearchCache.set(query, candidates);
 
 		logger.debug(
 			`${candidates.length} candidats d'entité trouvés pour la cellule "${query}"`,
@@ -192,12 +227,11 @@ export class EntitySearchService {
 		const candidates: EntityCandidate[] = [];
 
 		// Process cells in batches to avoid overwhelming the APIs
-		const batchSize = 5;
-		for (let i = 0; i < columnCells.length; i += batchSize) {
-			const batch = columnCells.slice(i, i + batchSize);
+		for (let i = 0; i < columnCells.length; i += this.batchSize) {
+			const batch = columnCells.slice(i, i + this.batchSize);
 
 			logger.debug(
-				`Traitement du lot ${Math.floor(i / batchSize) + 1}/${Math.ceil(columnCells.length / batchSize)}`,
+				`Traitement du lot ${Math.floor(i / this.batchSize) + 1}/${Math.ceil(columnCells.length / this.batchSize)}`,
 			);
 
 			const batchResults = await Promise.all(
@@ -208,9 +242,9 @@ export class EntitySearchService {
 				candidates.push(...cellCandidates);
 			}
 
-			// Add a small delay between batches to be nice to the APIs
-			if (i + batchSize < columnCells.length) {
-				await new Promise((resolve) => setTimeout(resolve, 500));
+			// Add a configurable delay between batches
+			if (i + this.batchSize < columnCells.length) {
+				await new Promise((resolve) => setTimeout(resolve, this.batchDelay));
 			}
 		}
 
@@ -255,9 +289,9 @@ export class EntitySearchService {
 			const candidates = await this.searchEntitiesForColumn(columnsCells[i]);
 			columnCandidates.push(candidates);
 
-			// Add a small delay between columns to be nice to the APIs
+			// Add a configurable delay between columns
 			if (i < columnsCells.length - 1) {
-				await new Promise((resolve) => setTimeout(resolve, 1000));
+				await new Promise((resolve) => setTimeout(resolve, this.columnDelay));
 			}
 		}
 
