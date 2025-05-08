@@ -167,7 +167,7 @@ note right of TypeExtraction : Retourne les types candidats pour chaque colonne 
 
 ' Étape 8: Agrégation et vote
 CTAAlgorithm -> TypeAggregation : aggregateColumnTypes(columnTypes, headers, columnRelations)
-note right of CTAAlgorithm : Analyse des types candidats et sélection du type le plus probable
+note right of CTAAlgorithm : Analyse des types candidats et sélection du type le plus fréquent (fréquence maximale)
 
 ' Priorité aux types Wikidata
 TypeAggregation -> TypeAggregation : prioritizeWikidataTypes(candidates)
@@ -180,7 +180,7 @@ TypeMapping --> TypeAggregation : wikidataTypes
 note right of TypeMapping : Retourne les types Wikidata équivalents
 
 TypeAggregation --> CTAAlgorithm : annotations
-note right of TypeAggregation : Retourne les annotations finales avec types assignés et scores de confiance
+note right of TypeAggregation : Retourne les annotations finales avec types assignés (type le plus fréquent) et scores de confiance
 
 ' Retour des résultats à l'utilisateur
 CTAAlgorithm --> User : annotations

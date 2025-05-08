@@ -134,7 +134,7 @@ L'application est organisée en modules spécialisés qui traitent chaque étape
 5. **Relations de Colonnes** : Analyse des relations sémantiques entre colonnes
 6. **Analyse URI** : Extraction d'informations à partir des URIs
 7. **Extraction de Types** : Récupération des types associés aux entités
-8. **Agrégation de Types** : Sélection du type final pour chaque colonne
+8. **Agrégation de Types** : Sélection du type final pour chaque colonne selon la fréquence maximale parmi les candidats
 
 ### Priorité des Types Wikidata
 
