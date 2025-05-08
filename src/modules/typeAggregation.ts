@@ -20,7 +20,6 @@ import type {
 	TypeCandidate,
 } from "../types";
 import { KNOWN_TYPE_RELATIONSHIPS } from "../dataset/typeRelationshipDataset";
-import { TypeMappingService } from "./typeMapping";
 
 /**
  * Service for aggregating and voting on column types
@@ -70,38 +69,50 @@ class TypeAggregationService {
 				continue;
 			}
 
-			// Clone the candidates to avoid modifying the originals
-			const adjustedCandidates = typeCandidates.map((candidate) => ({
-				...candidate,
-			}));
+			// Compute frequency of each type URI
+			const freqMap = new Map<string, {candidate: TypeCandidate, count: number}>();
+			for (const candidate of typeCandidates) {
+				const key = candidate.type.uri;
+				if (!freqMap.has(key)) {
+					freqMap.set(key, {candidate, count: 0});
+				}
+				const entry = freqMap.get(key);
+				if (entry) entry.count++;
+			}
 
-			// Apply relationship boosts
-			this.applyRelationshipBoosts(
-				adjustedCandidates,
-				i,
-				columnTypes,
-				columnRelations,
-			);
+			// Find the type(s) with the highest frequency
+			let maxFreq = 0;
+			let bestType: TypeCandidate | null = null;
+			for (const {candidate, count} of freqMap.values()) {
+				if (count > maxFreq) {
+					maxFreq = count;
+					bestType = candidate;
+				}
+			}
 
-			// Sort by adjusted confidence
-			adjustedCandidates.sort((a, b) => b.confidence - a.confidence);
+			if (!bestType) {
+				logger.warn(`No best type found for column ${header}`);
+				continue;
+			}
 
-			// Select the best type
-			const bestType = adjustedCandidates[0];
+			// Build alternatives (other types, sorted by frequency then confidence)
+			const alternativeTypes = Array.from(freqMap.values())
+				.filter(({candidate}) => candidate.type.uri !== bestType.type.uri)
+				.sort((a, b) => b.count - a.count || b.candidate.confidence - a.candidate.confidence)
+				.map(({candidate}) => candidate);
 
-			// Create the annotation
 			const annotation: ColumnTypeAnnotation = {
 				columnIndex: i,
 				columnHeader: header,
 				assignedType: bestType.type,
 				confidence: bestType.confidence,
-				alternativeTypes: adjustedCandidates.slice(1),
+				alternativeTypes,
 			};
 
 			annotations.push(annotation);
 
 			logger.debug(
-				`Colonne "${header}" annotée comme "${bestType.type.label}" avec une confiance de ${bestType.confidence.toFixed(2)}`,
+				`Colonne "${header}" annotée comme "${bestType.type.label}" (fréquence: ${maxFreq}, confiance: ${bestType.confidence.toFixed(2)})`,
 			);
 		}
 
