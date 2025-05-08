@@ -7,8 +7,8 @@
  * 3. Enhancing data quality for better entity matching
  */
 
-import { logger } from "../logger";
 import { format, isValid, parse } from "date-fns";
+import { logger } from "../logger";
 import type { Cell } from "../types";
 
 /**
@@ -514,8 +514,7 @@ export function standardizeNumberFormat(value: string): string {
 		const integerPart = normalized
 			.substring(0, lastSeparator)
 			.replace(/[.,]/g, "");
-		const decimalPart = afterLastSeparator;
-		const result = `${integerPart}.${decimalPart}`;
+		const result = `${integerPart}.${afterLastSeparator}`;
 		return isNegative ? `-${result}` : result;
 	}
 
@@ -530,7 +529,7 @@ export function standardizeNumberFormat(value: string): string {
  * @returns A new array of corrected cells
  */
 export function correctCells(cells: Cell[][]): Cell[][] {
-	logger.start("Correction des valeurs de cellules");
+	logger.info("Correction des valeurs de cellules");
 
 	const correctedCells = cells.map((columnCells) =>
 		columnCells.map((cell) => ({
@@ -539,7 +538,7 @@ export function correctCells(cells: Cell[][]): Cell[][] {
 		})),
 	);
 
-	logger.success("Correction des cellules terminée");
+	logger.debug("Correction des cellules terminée");
 
 	return correctedCells;
 }

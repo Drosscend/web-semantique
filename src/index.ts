@@ -13,10 +13,10 @@
  * 9. Outputs the results
  */
 
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { DEFAULT_CTA_CONFIG } from "./config";
-import { createProgressBar, logger } from "./logger";
+import { logger, updateProgressBar } from "./logger";
 import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
 
 import { analyzeColumnRelationships } from "./modules/columnRelationship";
@@ -42,7 +42,7 @@ export async function runCTA(
 	const mergedConfig: CTAConfig = { ...DEFAULT_CTA_CONFIG, ...config };
 
 	try {
-		logger.start(
+		logger.info(
 			`Démarrage de l'annotation de type de colonne pour ${csvFilePath}`,
 		);
 		logger.info("Configuration :", mergedConfig);
@@ -105,7 +105,7 @@ export async function runCTA(
 		);
 
 		const duration = (Date.now() - startTime) / 1000;
-		logger.success(
+		logger.info(
 			`Annotation de type de colonne terminée en ${duration.toFixed(2)} secondes`,
 		);
 
@@ -229,11 +229,14 @@ export async function processInputCsv(
 
 		// Initialize progress tracking
 		let processedCount = 0;
-		const totalFiles = inputData.length;
-		console.info(
-			`Progression globale du traitement (${totalFiles} fichiers) :`,
+		const totalFiles = files.length;
+		logger.info(
+			`Progression globale du traitement (${totalFiles} fichiers dans le dossier) :`,
 		);
-		console.info(createProgressBar(processedCount, totalFiles));
+		updateProgressBar(processedCount, totalFiles);
+
+		// Create a map to track which files have been processed
+		const processedFiles = new Set<string>();
 
 		// Process each input data entry
 		for (const entry of inputData) {
@@ -242,10 +245,16 @@ export async function processInputCsv(
 
 			if (!csvFile) {
 				logger.warn(`Aucun fichier CSV trouvé pour l'ID ${entry.id}`);
-				processedCount++;
-				console.info(createProgressBar(processedCount, totalFiles));
 				continue;
 			}
+
+			// Skip if we've already processed this file
+			if (processedFiles.has(csvFile)) {
+				continue;
+			}
+
+			// Mark this file as processed
+			processedFiles.add(csvFile);
 
 			logger.info(
 				`Traitement du fichier ${csvFile} pour l'ID ${entry.id}, colonne ${entry.columnIndex}`,
@@ -271,6 +280,16 @@ export async function processInputCsv(
 						`Aucune annotation trouvée pour la colonne ${entry.columnIndex} dans le fichier ${csvFile}`,
 					);
 				}
+
+				// Save the updated result immediately to the CSV file
+				let outputContent = "";
+				for (const item of inputData) {
+					outputContent += `${item.id},${item.columnIndex},${item.result || ""}\n`;
+				}
+				await Bun.write(inputCsvPath, outputContent);
+				logger.info(
+					`Résultat enregistré dans ${inputCsvPath} pour l'ID ${entry.id}`,
+				);
 			} catch (error) {
 				logger.error(
 					`Erreur lors du traitement du fichier ${csvFile} : ${error instanceof Error ? error.message : String(error)}`,
@@ -279,18 +298,13 @@ export async function processInputCsv(
 			}
 
 			// Update progress bar after processing each file
-			processedCount++;
-			console.info(createProgressBar(processedCount, totalFiles));
+			processedCount = processedFiles.size;
+			updateProgressBar(processedCount, totalFiles);
 		}
 
-		// Save the updated input data back to the CSV file
-		let outputContent = "";
-		for (const entry of inputData) {
-			outputContent += `${entry.id},${entry.columnIndex},${entry.result || ""}\n`;
-		}
-
-		await Bun.write(inputCsvPath, outputContent);
-		logger.success(`Résultats enregistrés dans ${inputCsvPath}`);
+		logger.success(
+			`Tous les résultats ont été enregistrés dans ${inputCsvPath}`,
+		);
 	} catch (error) {
 		logger.error(
 			`Erreur lors du traitement du fichier d'entrée : ${error instanceof Error ? error.message : String(error)}`,

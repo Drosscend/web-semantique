@@ -121,6 +121,27 @@ Options disponibles :
 | `--confidence=N.N` | Seuil de confiance minimum pour l'attribution de type | 0.3               |
 | `--help` | Affiche l'aide et les informations d'utilisation | -                 |
 
+## Architecture et Fonctionnement
+
+### Modules Principaux
+
+L'application est organisée en modules spécialisés qui traitent chaque étape du processus d'annotation :
+
+1. **Préparation des Données** : Chargement et nettoyage des fichiers CSV
+2. **Correction des Données** : Normalisation des valeurs pour améliorer la correspondance
+3. **Recherche d'Entités** : Identification des entités dans Wikidata et DBpedia
+4. **Mappage de Types** : Correspondance entre les types DBpedia et Wikidata
+5. **Relations de Colonnes** : Analyse des relations sémantiques entre colonnes
+6. **Analyse URI** : Extraction d'informations à partir des URIs
+7. **Extraction de Types** : Récupération des types associés aux entités
+8. **Agrégation de Types** : Sélection du type final pour chaque colonne
+
+### Priorité des Types Wikidata
+
+L'algorithme privilégie les types Wikidata pour l'annotation finale. Lorsque seuls des types DBpedia sont disponibles, ils sont automatiquement convertis en types Wikidata équivalents grâce à un système de mappage prédéfini.
+
+Ce processus garantit une cohérence dans les annotations et facilite l'intégration avec d'autres systèmes utilisant Wikidata comme référence.
+
 ## Auteur
 - [Véronési Kévin](mailto:kevin.veronesi@proton.me)
 - [Tandol Noémie](mailto:noemie.tandol@gmail.com)

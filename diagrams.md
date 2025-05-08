@@ -1,4 +1,4 @@
-## Version UML
+## Diagramme de Séquence
 
 ```plantuml
 @startuml
@@ -173,6 +173,17 @@ note right of TypeExtraction : Retourne les types candidats pour chaque colonne 
 ' Étape 8: Agrégation et vote
 CTAAlgorithm -> TypeAggregation : aggregateColumnTypes(columnTypes, headers, columnRelations)
 note right of CTAAlgorithm : Analyse des types candidats et sélection du type le plus probable
+
+' Priorité aux types Wikidata
+TypeAggregation -> TypeAggregation : prioritizeWikidataTypes(candidates)
+note right of TypeAggregation : Assure que seuls les types Wikidata sont utilisés
+
+' Conversion des types DBpedia en types Wikidata si nécessaire
+TypeAggregation -> TypeMapping : convertDbpediaTypeToWikidata(dbpediaType)
+note right of TypeAggregation : Convertit les types DBpedia en types Wikidata équivalents
+TypeMapping --> TypeAggregation : wikidataTypes
+note right of TypeMapping : Retourne les types Wikidata équivalents
+
 TypeAggregation --> CTAAlgorithm : annotations
 note right of TypeAggregation : Retourne les annotations finales avec types assignés et scores de confiance
 

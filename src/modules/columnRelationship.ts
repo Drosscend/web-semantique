@@ -403,7 +403,7 @@ export class ColumnRelationshipService {
 	analyzeColumnRelationships(
 		columnCandidates: EntityCandidate[][],
 	): ColumnRelation[] {
-		logger.start(
+		logger.info(
 			`Analyse des relations entre ${columnCandidates.length} colonnes`,
 		);
 
@@ -448,7 +448,7 @@ export class ColumnRelationshipService {
 		// Limit the number of relations per column
 		const filteredRelations = this.filterTopRelations(relations);
 
-		logger.success(
+		logger.debug(
 			`Found ${filteredRelations.length} significant column relationships`,
 		);
 		return filteredRelations;
@@ -622,14 +622,12 @@ export class ColumnRelationshipService {
 		}
 
 		// Convert to array and sort by frequency
-		const sortedTypes = Array.from(typeFrequency.values())
+		return Array.from(typeFrequency.values())
 			.map((item) => ({
 				...item.type,
 				frequency: item.count,
 			}))
 			.sort((a, b) => b.frequency - a.frequency);
-
-		return sortedTypes;
 	}
 }
 

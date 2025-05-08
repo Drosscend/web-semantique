@@ -35,7 +35,7 @@ export class URIAnalysisService {
 	 * @returns Enhanced entity candidates
 	 */
 	analyzeURIs(columnCandidates: EntityCandidate[][]): EntityCandidate[][] {
-		logger.start(`Analyse des URI pour ${columnCandidates.length} colonnes`);
+		logger.info(`Analyse des URI pour ${columnCandidates.length} colonnes`);
 
 		// Clone the candidates to avoid modifying the originals
 		const enhancedCandidates = columnCandidates.map((column) =>
@@ -93,7 +93,7 @@ export class URIAnalysisService {
 			}
 		}
 
-		logger.success("Analyse des URI terminée");
+		logger.debug("Analyse des URI terminée");
 		return enhancedCandidates;
 	}
 

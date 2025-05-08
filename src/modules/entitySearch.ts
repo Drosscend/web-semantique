@@ -171,7 +171,7 @@ export class EntitySearchService {
 			}
 		}
 
-		logger.success(
+		logger.debug(
 			`${candidates.length} candidats d'entité trouvés pour la cellule "${query}"`,
 		);
 		return candidates;
@@ -185,7 +185,7 @@ export class EntitySearchService {
 	async searchEntitiesForColumn(
 		columnCells: Cell[],
 	): Promise<EntityCandidate[]> {
-		logger.start(
+		logger.info(
 			`Recherche d'entités pour la colonne avec ${columnCells.length} cellules`,
 		);
 
@@ -214,7 +214,7 @@ export class EntitySearchService {
 			}
 		}
 
-		logger.success(
+		logger.debug(
 			`${candidates.length} candidats d'entité trouvés pour la colonne`,
 		);
 		return candidates;
@@ -230,7 +230,7 @@ export class EntitySearchService {
 		columnsCells: Cell[][],
 		config?: CTAConfig,
 	): Promise<EntityCandidate[][]> {
-		logger.start(`Recherche d'entités pour ${columnsCells.length} colonnes`);
+		logger.info(`Recherche d'entités pour ${columnsCells.length} colonnes`);
 
 		// Update configuration if provided
 		if (config?.sparqlEndpoints) {
@@ -250,7 +250,7 @@ export class EntitySearchService {
 		const columnCandidates: EntityCandidate[][] = [];
 
 		for (let i = 0; i < columnsCells.length; i++) {
-			logger.info(`Traitement de la colonne ${i + 1}/${columnsCells.length}`);
+			logger.debug(`Traitement de la colonne ${i + 1}/${columnsCells.length}`);
 
 			const candidates = await this.searchEntitiesForColumn(columnsCells[i]);
 			columnCandidates.push(candidates);
@@ -261,7 +261,7 @@ export class EntitySearchService {
 			}
 		}
 
-		logger.success("Recherche d'entités terminée pour toutes les colonnes");
+		logger.info("Recherche d'entités terminée pour toutes les colonnes");
 		return columnCandidates;
 	}
 

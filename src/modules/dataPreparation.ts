@@ -24,7 +24,7 @@ export async function loadCSV(
 	hasHeader = true,
 ): Promise<CSVTable> {
 	try {
-		logger.start(`Chargement du fichier CSV depuis ${filePath}`);
+		logger.info(`Chargement du fichier CSV depuis ${filePath}`);
 
 		const content = await Bun.file(filePath).text();
 		const lines = content
@@ -77,7 +77,7 @@ export async function loadCSV(
 
 		const data = (hasHeader ? lines.slice(1) : lines).map(parseCSVLine);
 
-		logger.success(
+		logger.debug(
 			`Fichier CSV chargé avec succès : ${headers.length} colonnes et ${data.length} lignes`,
 		);
 
@@ -97,13 +97,13 @@ export async function loadCSV(
  * @returns A new cleaned CSV table
  */
 export function cleanCSVData(table: CSVTable): CSVTable {
-	logger.start("Nettoyage des données CSV");
+	logger.info("Nettoyage des données CSV");
 
 	const cleanedData = table.data.map((row) =>
 		row.map((cell) => cleanCellValue(cell)),
 	);
 
-	logger.success("Nettoyage des données CSV terminé");
+	logger.debug("Nettoyage des données CSV terminé");
 
 	return {
 		headers: table.headers,
@@ -145,7 +145,7 @@ export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 	const sampleSize = config?.sampleSize || table.data.length;
 	const actualSampleSize = Math.min(sampleSize, table.data.length);
 
-	logger.info(
+	logger.debug(
 		`Extraction des cellules avec un échantillon de : ${actualSampleSize} lignes`,
 	);
 
@@ -179,7 +179,7 @@ export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 		}
 	}
 
-	logger.success(
+	logger.debug(
 		`Cellules extraites de ${actualSampleSize} lignes à travers ${table.headers.length} colonnes`,
 	);
 

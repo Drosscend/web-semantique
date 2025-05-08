@@ -15,7 +15,6 @@ import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type { EntityCandidate, SemanticType, TypeCandidate } from "../types";
-import { TypeMappingService } from "./typeMapping";
 
 /**
  * Service for extracting and organizing types from entities
@@ -47,7 +46,7 @@ export class TypeExtractionService {
 	async extractColumnTypes(
 		candidates: EntityCandidate[],
 	): Promise<TypeCandidate[]> {
-		logger.start(
+		logger.info(
 			`Extraction des types à partir de ${candidates.length} candidats d'entité`,
 		);
 
@@ -97,7 +96,7 @@ export class TypeExtractionService {
 			.filter((type) => type.confidence >= this.config.minTypeConfidence)
 			.slice(0, this.config.maxTypesPerColumn);
 
-		logger.success(
+		logger.debug(
 			`${filteredTypes.length} candidats de type extraits pour la colonne`,
 		);
 		return filteredTypes;

@@ -7,9 +7,7 @@
  * 3. Querying for entity types (P31 - instance of)
  */
 
-import {
-	DEFAULT_WIKIDATA_SERVICE_CONFIG,
-} from "../config";
+import { DEFAULT_WIKIDATA_SERVICE_CONFIG } from "../config";
 import type { WikidataServiceConfig } from "../config";
 import { logger } from "../logger";
 import type { Entity, SemanticType } from "../types";

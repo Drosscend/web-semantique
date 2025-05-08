@@ -12,8 +12,11 @@
  */
 
 import QuickLRU from "quick-lru";
+import {
+	type CacheServiceConfig,
+	DEFAULT_CACHE_SERVICE_CONFIG,
+} from "../config";
 import { logger } from "../logger";
-import { CacheServiceConfig, DEFAULT_CACHE_SERVICE_CONFIG } from "../config";
 
 /**
  * Service for caching SPARQL query results
@@ -42,7 +45,7 @@ export class CacheService {
 			maxAge: this.config.maxAge,
 		});
 
-		logger.debug(
+		logger.trace(
 			"Service de cache initialisé avec la configuration :",
 			this.config,
 		);
@@ -57,13 +60,13 @@ export class CacheService {
 		const value = this.wikidataCache.get(key);
 
 		if (value !== undefined) {
-			logger.debug(
+			logger.silent(
 				`Cache hit (Wikidata): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 			);
 			return value;
 		}
 
-		logger.debug(
+		logger.silent(
 			`Cache miss (Wikidata): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 		);
 		return undefined;
@@ -76,7 +79,7 @@ export class CacheService {
 	 */
 	setInWikidataCache(key: string, value: any): void {
 		this.wikidataCache.set(key, value);
-		logger.debug(
+		logger.silent(
 			`Cached (Wikidata): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 		);
 	}
@@ -90,13 +93,13 @@ export class CacheService {
 		const value = this.dbpediaCache.get(key);
 
 		if (value !== undefined) {
-			logger.debug(
+			logger.silent(
 				`Cache hit (DBpedia): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 			);
 			return value;
 		}
 
-		logger.debug(
+		logger.silent(
 			`Cache miss (DBpedia): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 		);
 		return undefined;
@@ -109,7 +112,7 @@ export class CacheService {
 	 */
 	setInDBpediaCache(key: string, value: any): void {
 		this.dbpediaCache.set(key, value);
-		logger.debug(
+		logger.silent(
 			`Cached (DBpedia): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 		);
 	}
@@ -142,7 +145,7 @@ export class CacheService {
 	invalidateWikidataEntry(key: string): boolean {
 		const deleted = this.wikidataCache.delete(key);
 		if (deleted) {
-			logger.debug(
+			logger.trace(
 				`Invalidated cache entry (Wikidata): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 			);
 		}
@@ -157,7 +160,7 @@ export class CacheService {
 	invalidateDBpediaEntry(key: string): boolean {
 		const deleted = this.dbpediaCache.delete(key);
 		if (deleted) {
-			logger.debug(
+			logger.trace(
 				`Invalidated cache entry (DBpedia): ${key.substring(0, 50)}${key.length > 50 ? "..." : ""}`,
 			);
 		}
