@@ -13,7 +13,7 @@ import {
 } from "../config";
 import { logger } from "../logger";
 import type { ColumnRelation, EntityCandidate, SemanticType } from "../types";
-import { KNOWN_TYPE_RELATIONSHIPS } from "../dataset/typeRelationshipDataset";
+import { KNOWN_TYPE_RELATIONSHIPS, ALL_TYPE_RELATIONSHIPS, indexRelationships } from "../dataset/typeRelationshipDataset";
 import type { TypeRelationship } from "../dataset/typeRelationshipDataset";
 
 /**
@@ -21,6 +21,7 @@ import type { TypeRelationship } from "../dataset/typeRelationshipDataset";
  */
 export class ColumnRelationshipService {
 	private config: ColumnRelationshipConfig;
+	private relationshipIndex = indexRelationships(ALL_TYPE_RELATIONSHIPS);
 
 	/**
 	 * Creates a new column relationship service
@@ -65,18 +66,19 @@ export class ColumnRelationshipService {
 					continue;
 
 				// Calculate the relationship confidence between these columns
-				const relationInfo = this.calculateColumnRelationship(
+				const relationInfos = this.calculateColumnRelationship(
 					sourceColumnCandidates,
 					targetColumnCandidates,
 				);
-
-				if (relationInfo.confidence >= this.config.minRelationConfidence) {
-					relations.push({
-						sourceColumnIndex: i,
-						targetColumnIndex: j,
-						relationType: relationInfo.relationType,
-						confidence: relationInfo.confidence,
-					});
+				for (const relationInfo of relationInfos) {
+					if (relationInfo.confidence >= this.config.minRelationConfidence) {
+						relations.push({
+							sourceColumnIndex: i,
+							targetColumnIndex: j,
+							relationType: relationInfo.relationType,
+							confidence: relationInfo.confidence,
+						});
+					}
 				}
 			}
 		}
@@ -132,52 +134,40 @@ export class ColumnRelationshipService {
 	private calculateColumnRelationship(
 		sourceCandidates: EntityCandidate[],
 		targetCandidates: EntityCandidate[],
-	): { relationType?: string; confidence: number } {
-		// Extract the most common types for each column
+	): { relationType?: string; confidence: number }[] {
 		const sourceTypes = this.extractCommonTypes(sourceCandidates);
 		const targetTypes = this.extractCommonTypes(targetCandidates);
-
-		// Check for known relationships between these types
-		let bestRelation: TypeRelationship | null = null;
-		let bestConfidence = 0;
+		const foundRelations: { relationType: string; confidence: number }[] = [];
 
 		for (const sourceType of sourceTypes) {
+			const targetMap = this.relationshipIndex.get(sourceType.uri);
+			if (!targetMap) continue;
 			for (const targetType of targetTypes) {
-				// Check if there's a known relationship between these types
-				for (const relation of KNOWN_TYPE_RELATIONSHIPS) {
-					if (
-						relation.sourceType === sourceType.uri &&
-						relation.targetType === targetType.uri
-					) {
-						const confidence =
-							relation.confidence *
-							(sourceType.frequency / sourceCandidates.length) *
-							(targetType.frequency / targetCandidates.length);
-
-						if (confidence > bestConfidence) {
-							bestRelation = relation;
-							bestConfidence = confidence;
-						}
-					}
+				const relations = targetMap.get(targetType.uri);
+				if (!relations) continue;
+				for (const relation of relations) {
+					const confidence =
+						relation.confidence *
+						(sourceType.frequency / sourceCandidates.length) *
+						(targetType.frequency / targetCandidates.length);
+					foundRelations.push({
+						relationType: relation.relationName,
+						confidence,
+					});
+					logger.debug(
+						`Relation found: ${sourceType.uri} -> ${targetType.uri} (${relation.relationName}), confidence: ${confidence.toFixed(2)}`
+					);
 				}
 			}
 		}
 
-		// Check for row-level relationships (same row index)
-		const rowLevelConfidence = this.calculateRowLevelRelationship(
-			sourceCandidates,
-			targetCandidates,
-		);
+		if (foundRelations.length === 0) {
+			logger.info(
+				`No relation found between types for columns (source: ${sourceTypes.map(t => t.uri).join(", ")}, target: ${targetTypes.map(t => t.uri).join(", ")})`
+			);
+		}
 
-		// Combine type-based and row-level confidence
-		const combinedConfidence = bestRelation
-			? bestConfidence * 0.7 + rowLevelConfidence * 0.3
-			: rowLevelConfidence * 0.5;
-
-		return {
-			relationType: bestRelation?.relationName,
-			confidence: combinedConfidence,
-		};
+		return foundRelations;
 	}
 
 	/**
