@@ -24,7 +24,7 @@ Le processus fonctionne en plusieurs étapes :
 
 3. **Analyse des colonnes** :
    - Pour chaque entrée du fichier d'entrée, l'algorithme analyse la colonne spécifiée dans le fichier CSV correspondant
-   - L'algorithme détermine automatiquement le type sémantique de la colonne en utilisant Wikidata et DBpedia
+   - L'algorithme nettoie automatiquement les valeurs lors du chargement du CSV, puis détermine le type sémantique de la colonne en utilisant Wikidata et DBpedia
 
 4. **Mise à jour du fichier d'entrée** :
    - L'algorithme remplit la troisième colonne du fichier d'entrée avec les URIs des types détectés
@@ -127,7 +127,7 @@ Options disponibles :
 
 L'application est organisée en modules spécialisés qui traitent chaque étape du processus d'annotation :
 
-1. **Préparation des Données** : Chargement et nettoyage des fichiers CSV
+1. **Préparation des Données** : Chargement et nettoyage automatique des fichiers CSV
 2. **Correction des Données** : Normalisation des valeurs pour améliorer la correspondance
 3. **Recherche d'Entités** : Identification des entités dans Wikidata et DBpedia
 4. **Mappage de Types** : Correspondance entre les types DBpedia et Wikidata

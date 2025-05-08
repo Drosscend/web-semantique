@@ -21,7 +21,7 @@ import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
 
 import { analyzeColumnRelationships } from "./modules/columnRelationship";
 import { correctCells } from "./modules/dataCorrection";
-import { cleanCSVData, extractCells, loadCSV } from "./modules/dataPreparation";
+import { extractCells, loadCSV } from "./modules/dataPreparation";
 import { searchEntities } from "./modules/entitySearch";
 import { aggregateColumnTypes } from "./modules/typeAggregation";
 import { extractTypesForAllColumns } from "./modules/typeExtraction";
@@ -50,8 +50,7 @@ export async function runCTA(
 		// Step 1: Load and prepare the CSV data
 		logger.info("Étape 1 : Chargement et préparation des données CSV");
 		const csvTable = await loadCSV(csvFilePath);
-		const cleanedTable = cleanCSVData(csvTable);
-		const columnCells = extractCells(cleanedTable, mergedConfig);
+		const columnCells = extractCells(csvTable, mergedConfig);
 
 		// Step 2: Correct the data
 		logger.info("Étape 2 : Correction des données");
@@ -100,7 +99,7 @@ export async function runCTA(
 		logger.info("Étape 8 : Agrégation et vote sur les types finaux");
 		const annotations = aggregateColumnTypes(
 			columnTypes,
-			cleanedTable.headers,
+			csvTable.headers,
 			columnRelations,
 		);
 

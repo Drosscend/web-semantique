@@ -35,7 +35,7 @@ export async function loadCSV(
 			throw new Error("CSV file is empty");
 		}
 
-		// Parse CSV lines properly handling quoted values
+		// Parse a CSV line, handling quoted values and cleaning each cell
 		const parseCSVLine = (line: string): string[] => {
 			const result: string[] = [];
 			let currentValue = "";
@@ -44,30 +44,21 @@ export async function loadCSV(
 			for (let i = 0; i < line.length; i++) {
 				const char = line[i];
 
-				// Handle quotes
 				if (char === '"') {
-					// Check if this is an escaped quote (double quote inside quoted value)
 					if (insideQuotes && i + 1 < line.length && line[i + 1] === '"') {
 						currentValue += '"';
-						i++; // Skip the next quote
+						i++;
 					} else {
-						// Toggle quote state
 						insideQuotes = !insideQuotes;
 					}
-				}
-				// Handle delimiter
-				else if (char === delimiter && !insideQuotes) {
-					result.push(currentValue.trim());
+				} else if (char === delimiter && !insideQuotes) {
+					result.push(cleanCellValue(currentValue));
 					currentValue = "";
-				}
-				// Handle normal character
-				else {
+				} else {
 					currentValue += char;
 				}
 			}
-
-			// Add the last value
-			result.push(currentValue.trim());
+			result.push(cleanCellValue(currentValue));
 			return result;
 		};
 
@@ -91,28 +82,7 @@ export async function loadCSV(
 }
 
 /**
- * Cleans the data in a CSV table by removing extra spaces,
- * normalizing special characters, and handling missing values
- * @param table The CSV table to clean
- * @returns A new cleaned CSV table
- */
-export function cleanCSVData(table: CSVTable): CSVTable {
-	logger.info("Nettoyage des données CSV");
-
-	const cleanedData = table.data.map((row) =>
-		row.map((cell) => cleanCellValue(cell)),
-	);
-
-	logger.debug("Nettoyage des données CSV terminé");
-
-	return {
-		headers: table.headers,
-		data: cleanedData,
-	};
-}
-
-/**
- * Cleans a single cell value
+ * Cleans a single cell value: trims spaces, normalizes special characters, and handles empty/null values
  * @param value The cell value to clean
  * @returns The cleaned cell value
  */
@@ -121,9 +91,9 @@ export function cleanCellValue(value: string): string {
 	let cleaned = value.trim().replace(/\s+/g, " ");
 
 	// Normalize special characters (accents, diacritics)
-	cleaned = cleaned.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	cleaned = cleaned.normalize("NFD").replace(/\p{Diacritic}/gu, "");
 
-	// Handle empty values
+	// Handle empty or null-like values
 	if (
 		cleaned === "" ||
 		cleaned.toLowerCase() === "null" ||
@@ -139,7 +109,7 @@ export function cleanCellValue(value: string): string {
  * Extracts cells from a CSV table for further processing
  * @param table The CSV table
  * @param config Optional configuration for sampling
- * @returns Array of Cell objects
+ * @returns Array of Cell objects per column
  */
 export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 	const sampleSize = config?.sampleSize || table.data.length;
@@ -149,14 +119,13 @@ export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 		`Extraction des cellules avec un échantillon de : ${actualSampleSize} lignes`,
 	);
 
-	// Create a cells array for each column
+	// Create an array for each column
 	const columnCells: Cell[][] = Array.from(
 		{ length: table.headers.length },
 		() => [],
 	);
 
-	// If we're sampling and have more rows than the sample size,
-	// select rows randomly but ensure we have a representative sample
+	// Select row indices for sampling
 	const rowIndices =
 		actualSampleSize < table.data.length
 			? getRepresentativeSampleIndices(table.data.length, actualSampleSize)
@@ -167,10 +136,8 @@ export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
 		const row = table.data[rowIndex];
 		for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
 			const value = row[columnIndex];
-
 			// Skip empty values
 			if (value.trim() === "") continue;
-
 			columnCells[columnIndex].push({
 				value,
 				rowIndex,

@@ -22,20 +22,14 @@ participant "ServiceCache" as CacheService
 User -> CTAAlgorithm : runCTA(csvFilePath, config)
 note right of User : L'utilisateur fournit le chemin du fichier CSV et une configuration optionnelle
 
-' Étape 1: Préparation des données - Chargement du CSV
+' Step 1: Data Preparation - Load CSV
 CTAAlgorithm -> DataPreparation : loadCSV(csvFilePath)
-note right of CTAAlgorithm : Chargement du fichier CSV dans une structure de données tabulaire
+note right of CTAAlgorithm : Chargement du fichier CSV dans une structure de données tabulaire (nettoyage automatique des valeurs)
 DataPreparation --> CTAAlgorithm : csvTable
-note right of DataPreparation : Retourne une structure CSVTable avec en-têtes et données
+note right of DataPreparation : Retourne une structure CSVTable avec en-têtes et données nettoyées
 
-' Étape 1: Préparation des données - Nettoyage
-CTAAlgorithm -> DataPreparation : cleanCSVData(csvTable)
-note right of CTAAlgorithm : Suppression des espaces superflus et normalisation des caractères spéciaux
-DataPreparation --> CTAAlgorithm : cleanedTable
-note right of DataPreparation : Retourne une table nettoyée prête pour le traitement
-
-' Étape 1: Préparation des données - Extraction des cellules
-CTAAlgorithm -> DataPreparation : extractCells(cleanedTable, config)
+' Step 1: Data Preparation - Extract cells
+CTAAlgorithm -> DataPreparation : extractCells(csvTable, config)
 note right of CTAAlgorithm : Extraction des cellules avec échantillonnage configurable
 DataPreparation --> CTAAlgorithm : columnCells
 note right of DataPreparation : Retourne un tableau de cellules organisé par colonnes
