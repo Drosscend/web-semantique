@@ -22,7 +22,7 @@ import type { EntityCandidate, SemanticType, TypeCandidate } from "../types";
 export class TypeExtractionService {
 	private dbpediaService: DBpediaService;
 	private wikidataService: WikidataService;
-	private config: TypeExtractionConfig;
+	private readonly config: TypeExtractionConfig;
 
 	/**
 	 * Creates a new type extraction service
