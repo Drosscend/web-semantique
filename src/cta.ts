@@ -15,7 +15,7 @@
 
 import { DEFAULT_CTA_CONFIG } from "./config";
 import { logger } from "./logger";
-import type { CTAConfig, ColumnRelation, ColumnTypeAnnotation } from "./types";
+import type { Config, ColumnRelation, ColumnTypeAnnotation } from "./types";
 
 import { analyzeColumnRelationships } from "./modules/columnRelationship";
 import { correctCells } from "./modules/dataCorrection";
@@ -34,10 +34,10 @@ import { analyzeURIs } from "./modules/uriAnalysis";
  */
 export async function runCTA(
 	csvFilePath: string,
-	config: Partial<CTAConfig> = {},
+	config: Partial<Config> = {},
 ): Promise<ColumnTypeAnnotation[]> {
 	const startTime = Date.now();
-	const mergedConfig: CTAConfig = { ...DEFAULT_CTA_CONFIG, ...config };
+	const mergedConfig: Config = { ...DEFAULT_CTA_CONFIG, ...config };
 
 	try {
 		logger.info(

@@ -6,7 +6,7 @@
  * Each configuration option includes detailed explanations of its purpose and impact.
  */
 
-import type { CTAConfig } from "./types";
+import type { Config } from "./types";
 
 /**
  * Configuration for the cache service
@@ -59,17 +59,18 @@ export const DEFAULT_CACHE_SERVICE_CONFIG: CacheServiceConfig = {
  * These settings control the overall behavior of the CTA algorithm.
  * Adjusting these parameters can significantly impact performance, accuracy, and resource usage.
  */
-export const DEFAULT_CTA_CONFIG: CTAConfig = {
+export const DEFAULT_CTA_CONFIG: Config = {
 	/**
 	 * Number of rows to sample from the CSV for type detection
 	 *
 	 * Impact:
 	 * - Higher values improve accuracy by analyzing more data but increase processing time
 	 * - Lower values speed up processing but may reduce accuracy, especially for heterogeneous columns
+	 * - To handle all lines set to undefined or 0
 	 * - Recommended to increase for large datasets with diverse values
-	 * - For small datasets (<100 rows), consider using all rows (set to 0 for all rows)
+	 * - For small datasets (<100 rows), consider using all rows (set to undefined or 0 for all rows)
 	 */
-	sampleSize: 50,
+	sampleSize: undefined,
 
 	/**
 	 * Minimum confidence threshold for type assignment

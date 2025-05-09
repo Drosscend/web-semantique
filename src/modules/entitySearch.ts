@@ -17,7 +17,7 @@ import { logger } from "../logger";
 import { DBpediaService } from "../services/DBpediaService";
 import { WikidataService } from "../services/WikidataService";
 import type {
-	CTAConfig,
+	Config,
 	Cell,
 	Entity,
 	EntityCandidate,
@@ -284,7 +284,7 @@ class EntitySearchService {
 	 */
 	async searchEntitiesForAllColumns(
 		columnsCells: Cell[][],
-		config?: CTAConfig,
+		config?: Config,
 	): Promise<EntityCandidate[][]> {
 		logger.info(`Recherche d'entités pour ${columnsCells.length} colonnes`);
 
@@ -357,11 +357,6 @@ class EntitySearchService {
 					adjustedConfidence += 0.2;
 				}
 
-				// Boost entities with descriptions
-				if (entity.description) {
-					adjustedConfidence += 0.05;
-				}
-
 				// Cap confidence at 1.0
 				adjustedConfidence = Math.min(adjustedConfidence, 1.0);
 
@@ -390,7 +385,7 @@ export function createEntitySearchService(): EntitySearchService {
  */
 export async function searchEntities(
 	columnsCells: Cell[][],
-	config?: CTAConfig,
+	config?: Config,
 ): Promise<EntityCandidate[][]> {
 	const service = createEntitySearchService();
 	return service.searchEntitiesForAllColumns(columnsCells, config);

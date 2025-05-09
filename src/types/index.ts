@@ -75,8 +75,8 @@ export interface ColumnTypeAnnotation {
 /**
  * Configuration options for the CTA algorithm
  */
-export interface CTAConfig {
-	sampleSize?: number; // Number of rows to sample for type detection
+export interface Config {
+	sampleSize?: number; // Number of rows to sample for type detection (undefined or 0 = all rows)
 	confidenceThreshold?: number; // Minimum confidence threshold for type assignment
 	useColumnRelations?: boolean; // Whether to use relations between columns
 	useURIAnalysis?: boolean; // Whether to analyze URIs for additional information

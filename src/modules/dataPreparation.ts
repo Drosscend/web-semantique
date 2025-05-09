@@ -9,7 +9,7 @@
  */
 
 import { logger } from "../logger";
-import type { CSVTable, CTAConfig, Cell } from "../types";
+import type { CSVTable, Config, Cell } from "../types";
 
 /**
  * Loads a CSV file and returns a structured representation
@@ -108,11 +108,14 @@ export function cleanCellValue(value: string): string {
 /**
  * Extracts cells from a CSV table for further processing
  * @param table The CSV table
- * @param config Optional configuration for sampling
+ * @param config Optional configuration for sampling (sampleSize: undefined/0 = all rows)
  * @returns Array of Cell objects per column
  */
-export function extractCells(table: CSVTable, config?: CTAConfig): Cell[][] {
-	const sampleSize = config?.sampleSize || table.data.length;
+export function extractCells(table: CSVTable, config?: Config): Cell[][] {
+	let sampleSize = config?.sampleSize;
+	if (sampleSize === undefined || sampleSize === null || sampleSize <= 0) {
+		sampleSize = table.data.length;
+	}
 	const actualSampleSize = Math.min(sampleSize, table.data.length);
 
 	logger.debug(
