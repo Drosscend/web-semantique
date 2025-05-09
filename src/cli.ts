@@ -24,7 +24,6 @@ Annotation de Type de Colonne CSV vers RDF (CTA)
 
 UTILISATION:
   bun run src\\index.ts                           # Lance l'interface interactive avec menu
-  bun run src\\index.ts <chemin-fichier-csv-entrée> <chemin-dossier-csv> [options]  # Mode legacy
   bun run src\\index.ts --help                    # Affiche ce message d'aide
 
 DESCRIPTION:
@@ -46,7 +45,7 @@ DESCRIPTION:
   indiquées, et remplit la troisième colonne du fichier d'entrée avec les URIs des types détectés.
 
 MODES:
-  Mode interactif (sans arguments):
+  Mode interactif:
     Lance une interface interactive avec un menu permettant de choisir entre le mode simple et le mode batch,
     et de configurer les options comme la taille d'échantillon et le seuil de confiance.
 
@@ -55,27 +54,11 @@ MODES:
     - Des options avancées pour l'analyse des relations entre colonnes et des URI
     - Des paramètres de cache pour optimiser les performances
 
-  Mode legacy (avec arguments):
-    Utilise les arguments de ligne de commande pour configurer l'application.
-
-ARGUMENTS (mode legacy):
-  <chemin-fichier-csv-entrée>  Chemin vers le fichier CSV contenant les IDs et colonnes à analyser
-  <chemin-dossier-csv>         Chemin vers le dossier contenant les fichiers CSV à analyser
-
-OPTIONS (mode legacy):
+OPTIONS:
   --help                  Affiche ce message d'aide
-  --sample=N              Nombre de lignes à échantillonner (défaut: 50)
-                          Valeurs plus élevées: meilleure précision, temps de traitement plus long
-                          Valeurs plus basses: traitement plus rapide, précision potentiellement réduite
-
-  --confidence=N.N        Seuil de confiance minimum (défaut: 0.3)
-                          Valeurs plus élevées: annotations plus fiables mais moins nombreuses
-                          Valeurs plus basses: plus d'annotations mais potentiellement moins précises
 
 EXEMPLES:
   bun run src\\index.ts                           # Lance l'interface interactive
-  bun run src\\index.ts input.csv data\\dossier_csv  # Mode legacy avec valeurs par défaut
-  bun run src\\index.ts input.csv data\\dossier_csv --sample=20 --confidence=0.5  # Mode legacy avec options
 
 Pour plus d'informations, consultez le README.md
 `);
@@ -324,73 +307,6 @@ export async function main() {
 		// Initialize cache configuration if not present
 		if (!config.cache) {
 			config.cache = {};
-		}
-
-		// If command line arguments are provided, use the legacy mode
-		if (args.length > 0) {
-			logger.warn(
-				"Des arguments de ligne de commande ont été détectés. Utilisation du mode legacy.",
-			);
-
-			if (args.length < 2) {
-				logger.error(
-					"Utilisation : bun run src\\index.ts <chemin-fichier-csv-entrée> <chemin-dossier-csv> [options]",
-				);
-				logger.info("Utilisez --help pour plus d'informations");
-				process.exit(1);
-			}
-
-			// Extract the input paths (non-option arguments)
-			const nonOptionArgs = args.filter((arg) => !arg.startsWith("--"));
-			const inputCsvPath = nonOptionArgs[0];
-			const csvDirectoryPath = nonOptionArgs[1];
-
-			// Parse sample size
-			const sampleArg = args.find((arg) => arg.startsWith("--sample="));
-			if (sampleArg) {
-				const sampleSize = Number.parseInt(sampleArg.split("=")[1], 10);
-				if (!Number.isNaN(sampleSize) && sampleSize >= 0) {
-					config.sampleSize = sampleSize;
-					logger.info(`Taille d'échantillon configurée à ${sampleSize}`);
-				} else {
-					logger.warn(
-						"Valeur invalide pour --sample, utilisation de la valeur par défaut",
-					);
-				}
-			}
-
-			// Parse confidence threshold
-			const confidenceArg = args.find((arg) => arg.startsWith("--confidence="));
-			if (confidenceArg) {
-				const confidence = Number.parseFloat(confidenceArg.split("=")[1]);
-				if (!Number.isNaN(confidence) && confidence >= 0 && confidence <= 1) {
-					config.confidenceThreshold = confidence;
-					logger.info(`Seuil de confiance configuré à ${confidence}`);
-				} else {
-					logger.warn(
-						"Valeur invalide pour --confidence, utilisation de la valeur par défaut",
-					);
-				}
-			}
-
-			// Check if the input paths exist
-			if (!existsSync(inputCsvPath)) {
-				logger.error(
-					`Le fichier CSV d'entrée spécifié n'existe pas : ${inputCsvPath}`,
-				);
-				process.exit(1);
-			}
-
-			if (!existsSync(csvDirectoryPath)) {
-				logger.error(
-					`Le dossier CSV spécifié n'existe pas : ${csvDirectoryPath}`,
-				);
-				process.exit(1);
-			}
-
-			// Process the input CSV file
-			await processInputCsv(inputCsvPath, csvDirectoryPath, config);
-			return;
 		}
 
 		// Interactive menu mode
