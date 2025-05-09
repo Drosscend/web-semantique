@@ -53,6 +53,7 @@ export async function runCEA(
 		}[] = [];
 		for (let col = 0; col < entityCandidates.length; col++) {
 			for (const candidate of entityCandidates[col]) {
+				if (candidate?.entity?.source === "DBpedia") continue;
 				if (candidate?.entity?.uri) {
 					results.push({
 						row: candidate.cell.rowIndex,
