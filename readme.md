@@ -1,8 +1,17 @@
-# Annotation de Type de Colonne CSV vers RDF (CTA)
+# Annotation CSV vers RDF (CTA/CEA)
 
-Ce projet implémente un algorithme d'Annotation de Type de Colonne (CTA) qui détermine automatiquement le type sémantique de colonnes spécifiques dans des fichiers CSV en utilisant les bases de connaissances Wikidata et DBpedia.
+Ce projet implémente deux types d'annotation automatique pour les fichiers CSV :
+- **Annotation de Type de Colonne (CTA)** : Détermine automatiquement le type sémantique de colonnes spécifiques dans des fichiers CSV en utilisant les bases de connaissances Wikidata et DBpedia.
+- **Annotation d'Entités de Cellule (CEA)** : Identifie et annote les entités pour chaque cellule d'un fichier CSV en utilisant les bases de connaissances Wikidata et DBpedia.
 
 ## Vue d'ensemble
+
+L'application propose deux modes de fonctionnement pour chaque type d'annotation (CTA et CEA) :
+
+1. **Mode simple** : Traite un seul fichier CSV et affiche les résultats dans la console
+2. **Mode batch** : Traite un lot de fichiers CSV basé sur un fichier d'entrée et un dossier de fichiers CSV
+
+### Annotation de Type de Colonne (CTA)
 
 L'algorithme CTA prend en entrée un fichier CSV contenant des IDs et des colonnes à analyser, puis recherche les fichiers CSV correspondants dans un dossier spécifié. Il analyse ensuite les colonnes indiquées et remplit le fichier d'entrée avec les URIs des types détectés.
 
@@ -28,6 +37,34 @@ Le processus fonctionne en plusieurs étapes :
 
 4. **Mise à jour du fichier d'entrée** :
    - L'algorithme remplit la troisième colonne du fichier d'entrée avec les URIs des types détectés
+   - Le fichier d'entrée est mis à jour avec les résultats
+
+### Annotation d'Entités de Cellule (CEA)
+
+L'algorithme CEA identifie et annote les entités pour chaque cellule d'un fichier CSV. En mode batch, il prend en entrée un fichier CSV contenant des IDs, des lignes et des colonnes à analyser, puis recherche les fichiers CSV correspondants dans un dossier spécifié.
+
+Le processus fonctionne en plusieurs étapes :
+
+1. **Chargement du fichier d'entrée** : 
+   - Lecture du fichier CSV d'entrée contenant les IDs, les lignes et les colonnes à analyser
+   - Format attendu : `ID,row,colonne,uri`
+   - Exemple :
+     ```
+     FICHIER1,2,3,
+     FICHIER2,0,1,
+     FICHIER3,5,0,
+     ```
+
+2. **Recherche des fichiers CSV** :
+   - Recherche des fichiers CSV correspondants dans le dossier spécifié
+   - Les noms des fichiers doivent correspondre aux IDs du fichier d'entrée
+
+3. **Analyse des cellules** :
+   - Pour chaque entrée du fichier d'entrée, l'algorithme analyse la cellule spécifiée dans le fichier CSV correspondant
+   - L'algorithme nettoie automatiquement les valeurs lors du chargement du CSV, puis identifie les entités correspondantes en utilisant Wikidata et DBpedia
+
+4. **Mise à jour du fichier d'entrée** :
+   - L'algorithme remplit la quatrième colonne du fichier d'entrée avec les URIs des entités détectées
    - Le fichier d'entrée est mis à jour avec les résultats
 
 ## Installation
@@ -59,29 +96,44 @@ Le processus fonctionne en plusieurs étapes :
 
 ## Utilisation
 
-### Ligne de commande
+L'application propose deux modes d'utilisation :
+1. **Mode interactif** (recommandé) : Interface avec menu permettant de configurer facilement les options
+2. **Mode ligne de commande** : Pour une utilisation plus avancée ou dans des scripts
 
-Exécutez l'algorithme CTA avec le fichier d'entrée et le dossier contenant les fichiers CSV :
+### Mode interactif
 
-```bash
-bun run src\index.ts <chemin-fichier-csv-entrée> <chemin-dossier-csv> [options]
-```
-
-#### Exemple de base
+Pour lancer l'interface interactive avec menu :
 
 ```bash
-bun run src\index.ts input.csv data\dossier_csv
+bun run src\index.ts
 ```
 
-Cette commande :
-1. Lit le fichier `input.csv` contenant les IDs et les colonnes à analyser
-2. Recherche les fichiers CSV correspondants dans le dossier `data\dossier_csv`
-3. Analyse les colonnes spécifiées dans chaque fichier CSV
-4. Met à jour le fichier `input.csv` avec les URIs des types détectés
+Cette commande lance un menu interactif qui vous guide à travers les étapes suivantes :
+1. Choix du type d'annotation (CTA ou CEA)
+2. Sélection d'un preset de configuration (pour CTA) ou configuration personnalisée
+3. Choix du mode de traitement (simple ou batch)
+4. Configuration des paramètres spécifiques
 
-#### Format du fichier d'entrée
+#### Presets de configuration (CTA)
 
-Le fichier CSV d'entrée doit être au format suivant :
+L'interface interactive propose trois presets de configuration pour l'algorithme CTA :
+- **Précision basse** : Traitement rapide, moins précis (échantillon de 20 lignes, seuil de confiance de 0.2)
+- **Précision moyenne** : Équilibre entre vitesse et précision (échantillon de 50 lignes, seuil de confiance de 0.3)
+- **Précision élevée** : Traitement plus lent, plus précis (échantillon de 100 lignes, seuil de confiance de 0.4)
+
+### Mode ligne de commande
+
+Pour afficher l'aide et les informations d'utilisation :
+
+```bash
+bun run src\index.ts --help
+```
+
+#### Format des fichiers d'entrée
+
+Pour le mode batch, les fichiers d'entrée doivent respecter les formats suivants :
+
+**Format CTA** :
 ```
 ID,colonne,résultat
 ```
@@ -98,28 +150,23 @@ BQC7DZZR,0,
 C8RTQNU5,0,
 ```
 
-### Options de ligne de commande
-
-L'algorithme CTA accepte plusieurs options pour personnaliser son comportement :
-
-```bash
-# Augmenter la taille de l'échantillon pour une meilleure précision
-bun run src\index.ts input.csv data\dossier_csv --sample=20
-
-# Définir un seuil de confiance plus élevé pour des annotations plus fiables
-bun run src\index.ts input.csv data\dossier_csv --confidence=0.5
-
-# Combiner plusieurs options
-bun run src\index.ts input.csv data\dossier_csv --sample=30 --confidence=0.4
+**Format CEA** :
+```
+ID,row,colonne,uri
 ```
 
-Options disponibles :
+Où :
+- `ID` est l'identifiant du fichier CSV à analyser (sans l'extension .csv)
+- `row` est l'index de la ligne à analyser (commençant à 1)
+- `colonne` est l'index de la colonne à analyser (commençant à 0)
+- `uri` est la colonne qui sera remplie avec l'URI de l'entité détectée
 
-| Option | Description | Valeur par défaut |
-|--------|-------------|-------------------|
-| `--sample=N` | Nombre de lignes à échantillonner pour la détection de type | 50                |
-| `--confidence=N.N` | Seuil de confiance minimum pour l'attribution de type | 0.3               |
-| `--help` | Affiche l'aide et les informations d'utilisation | -                 |
+Exemple :
+```
+FICHIER1,2,3,
+FICHIER2,0,1,
+FICHIER3,5,0,
+```
 
 ## Architecture et Fonctionnement
 
@@ -127,9 +174,12 @@ Options disponibles :
 
 L'application est organisée en modules spécialisés qui traitent chaque étape du processus d'annotation :
 
+#### Modules communs (CTA et CEA)
 1. **Préparation des Données** : Chargement et nettoyage automatique des fichiers CSV
 2. **Correction des Données** : Normalisation des valeurs pour améliorer la correspondance
 3. **Recherche d'Entités** : Identification des entités dans Wikidata et DBpedia
+
+#### Modules spécifiques à CTA
 4. **Mappage de Types** : Correspondance entre les types DBpedia et Wikidata
 5. **Relations de Colonnes** : Analyse des relations sémantiques entre colonnes
 6. **Analyse URI** : Extraction d'informations à partir des URIs
@@ -141,6 +191,13 @@ L'application est organisée en modules spécialisés qui traitent chaque étape
 L'algorithme privilégie les types Wikidata pour l'annotation finale. Lorsque seuls des types DBpedia sont disponibles, ils sont automatiquement convertis en types Wikidata équivalents grâce à un système de mappage prédéfini.
 
 Ce processus garantit une cohérence dans les annotations et facilite l'intégration avec d'autres systèmes utilisant Wikidata comme référence.
+
+### Différences entre CTA et CEA
+
+- **CTA (Column Type Annotation)** : Analyse les valeurs d'une colonne entière pour déterminer le type sémantique le plus approprié pour cette colonne.
+- **CEA (Cell Entity Annotation)** : Identifie l'entité spécifique correspondant à chaque cellule individuelle dans le fichier CSV.
+
+Les deux algorithmes partagent les étapes initiales de préparation et de correction des données, ainsi que la recherche d'entités, mais diffèrent dans leurs objectifs finaux et leurs méthodes d'agrégation des résultats.
 
 ## Auteur
 - [Véronési Kévin](mailto:kevin.veronesi@proton.me)
