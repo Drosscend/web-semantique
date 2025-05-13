@@ -78,8 +78,8 @@ Le processus fonctionne en plusieurs étapes :
 
 1. Clonez le dépôt :
    ```bash
-   git clone https://github.com/Drosscend/cta-web-sementique
-   cd cta-web-sementique
+   git clone https://github.com/Drosscend/cta-web-semantique
+   cd cta-web-semantique
    ```
 
 2. Installez les dépendances :
