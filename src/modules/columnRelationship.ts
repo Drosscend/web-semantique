@@ -11,14 +11,12 @@ import {
 	type ColumnRelationshipConfig,
 	DEFAULT_COLUMN_RELATIONSHIP_CONFIG,
 } from "../config";
-import { logger } from "../logger";
-import type { ColumnRelation, EntityCandidate, SemanticType } from "../types";
 import {
-	KNOWN_TYPE_RELATIONSHIPS,
 	ALL_TYPE_RELATIONSHIPS,
 	indexRelationships,
 } from "../dataset/typeRelationshipDataset";
-import type { TypeRelationship } from "../dataset/typeRelationshipDataset";
+import { logger } from "../logger";
+import type { ColumnRelation, EntityCandidate, SemanticType } from "../types";
 
 /**
  * Service for analyzing relationships between columns
