@@ -13,7 +13,7 @@ L'application propose deux modes de fonctionnement pour chaque type d'annotation
 
 ### Annotation de Type de Colonne (CTA)
 
-L'algorithme CTA prend en entrée un fichier CSV contenant des IDs et des colonnes à analyser, puis recherche les fichiers CSV correspondants dans un dossier spécifié. Il analyse ensuite les colonnes indiquées et remplit le fichier d'entrée avec les URIs des types détectés.
+L'algorithme CTA (Column Type Annotation) prend en entrée un fichier CSV contenant des IDs et des colonnes à analyser, puis recherche les fichiers CSV correspondants dans un dossier spécifié. Il analyse ensuite les colonnes indiquées et remplit le fichier d'entrée avec les URIs des types détectés.
 
 Le processus fonctionne en plusieurs étapes :
 
@@ -39,9 +39,60 @@ Le processus fonctionne en plusieurs étapes :
    - L'algorithme remplit la troisième colonne du fichier d'entrée avec les URIs des types détectés
    - Le fichier d'entrée est mis à jour avec les résultats
 
+#### Fonctionnement détaillé de l'algorithme CTA
+
+L'algorithme CTA est composé de 8 étapes principales qui permettent de déterminer avec précision le type sémantique d'une colonne :
+
+1. **Chargement et préparation des données CSV** :
+   - Lecture du fichier CSV avec gestion des délimiteurs et des guillemets
+   - Nettoyage des valeurs (suppression des espaces superflus, normalisation des caractères spéciaux)
+   - Extraction d'un échantillon représentatif de cellules pour chaque colonne (configurable via `sampleSize`)
+   - Sélection intelligente des lignes pour garantir un échantillon représentatif (premières, dernières et lignes intermédiaires)
+
+2. **Correction des données** :
+   - Standardisation de la capitalisation (majuscules/minuscules) selon le contexte
+   - Correction des fautes d'orthographe courantes (fonction présente, mais pas encore implémentée)
+   - Normalisation des formats de dates (conversion vers le format ISO YYYY-MM-DD)
+   - Standardisation des formats numériques (gestion des séparateurs décimaux et des milliers)
+   - Utilisation d'un cache local pour éviter les corrections redondantes
+
+3. **Recherche d'entités** :
+   - Interrogation parallèle des bases de connaissances Wikidata et DBpedia
+   - Recherche des entités correspondant aux valeurs des cellules
+   - Classement et filtrage des candidats selon leur score de confiance
+   - Récupération des types sémantiques pour chaque entité candidate
+   - Traitement par lots avec délais configurables pour respecter les limites des API
+   - Mécanisme de retry avec backoff exponentiel en cas d'erreurs réseau
+
+4. **Mappage entre les types DBpedia et Wikidata** :
+   - Établissement de correspondances entre les types DBpedia et Wikidata
+   - Enrichissement des candidats avec des types provenant des deux bases de connaissances
+   - Utilisation d'un dataset de mappage prédéfini pour garantir la cohérence
+
+5. **Analyse des relations entre colonnes** (si activé via `useColumnRelations`) :
+   - Détection des relations sémantiques entre les colonnes (ex: pays-capitale, personne-profession)
+   - Calcul de scores de confiance pour chaque relation détectée
+   - Utilisation de ces relations pour améliorer la détection de types
+
+6. **Analyse des URI** (si activé via `useURIAnalysis`) :
+   - Extraction d'informations supplémentaires à partir des URI des entités
+   - Amélioration de la désambiguïsation pour les entités ayant des libellés similaires
+   - Ajustement des scores de confiance en fonction des correspondances dans les URI
+
+7. **Extraction des types** :
+   - Récupération des types directs et des types parents pour chaque entité
+   - Filtrage des types selon leur pertinence et leur score de confiance
+   - Agrégation des types au niveau de la colonne
+
+8. **Agrégation et vote sur les types finaux** :
+   - Calcul de la fréquence de chaque type dans la colonne
+   - Prise en compte des relations entre colonnes pour ajuster les scores
+   - Sélection du type final selon le score de confiance et la fréquence
+   - Application d'un seuil de confiance minimal (configurable via `confidenceThreshold`)
+
 ### Annotation d'Entités de Cellule (CEA)
 
-L'algorithme CEA identifie et annote les entités pour chaque cellule d'un fichier CSV. En mode batch, il prend en entrée un fichier CSV contenant des IDs, des lignes et des colonnes à analyser, puis recherche les fichiers CSV correspondants dans un dossier spécifié.
+L'algorithme CEA (Cell Entity Annotation) identifie et annote les entités pour chaque cellule d'un fichier CSV. En mode batch, il prend en entrée un fichier CSV contenant des IDs, des lignes et des colonnes à analyser, puis recherche les fichiers CSV correspondants dans un dossier spécifié.
 
 Le processus fonctionne en plusieurs étapes :
 
@@ -66,6 +117,37 @@ Le processus fonctionne en plusieurs étapes :
 4. **Mise à jour du fichier d'entrée** :
    - L'algorithme remplit la quatrième colonne du fichier d'entrée avec les URIs des entités détectées
    - Le fichier d'entrée est mis à jour avec les résultats
+
+#### Fonctionnement détaillé de l'algorithme CEA
+
+L'algorithme CEA est composé de 3 étapes principales qui permettent d'identifier avec précision les entités correspondant à chaque cellule d'un fichier CSV :
+
+1. **Chargement et préparation des données CSV** :
+   - Lecture du fichier CSV avec gestion des délimiteurs et des guillemets
+   - Nettoyage des valeurs (suppression des espaces superflus, normalisation des caractères spéciaux)
+   - Extraction des cellules pour chaque colonne
+   - Contrairement à CTA, CEA traite toutes les lignes du fichier (pas d'échantillonnage)
+
+2. **Correction des données** :
+   - Standardisation de la capitalisation (majuscules/minuscules) selon le contexte
+   - Correction des fautes d'orthographe courantes
+   - Normalisation des formats de dates (conversion vers le format ISO YYYY-MM-DD)
+   - Standardisation des formats numériques (gestion des séparateurs décimaux et des milliers)
+   - Utilisation d'un cache local pour éviter les corrections redondantes
+
+3. **Recherche d'entités** :
+   - Interrogation parallèle des bases de connaissances Wikidata et DBpedia
+   - Recherche des entités correspondant aux valeurs des cellules
+   - Classement et filtrage des candidats selon leur score de confiance
+   - Récupération des types sémantiques pour chaque entité candidate
+   - Traitement par lots avec délais configurables pour respecter les limites des API
+   - Mécanisme de retry avec backoff exponentiel en cas d'erreurs réseau
+
+4. **Préparation des résultats** :
+   - Sélection de la meilleure entité pour chaque cellule (celle avec le score de confiance le plus élevé)
+   - Priorité donnée aux entités Wikidata (les entités DBpedia sont ignorées si des entités Wikidata sont disponibles)
+   - Création d'une liste d'annotations contenant pour chaque cellule : numéro de ligne, numéro de colonne, URI de l'entité et score de confiance
+   - Filtrage des résultats selon un seuil de confiance minimal
 
 ## Installation
 
