@@ -284,3 +284,4 @@ Les deux algorithmes partagent les étapes initiales de préparation et de corre
 ## Auteur
 - [Véronési Kévin](mailto:kevin.veronesi@proton.me)
 - [Tandol Noémie](mailto:noemie.tandol@gmail.com)
+
